@@ -836,12 +836,32 @@
         afficherErreurAuth(err.message || 'Erreur d\'inscription');
       }
     });
+       // ═══ ÉTAT UTILISATEUR (déplacé ici) ═══
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        utilisateurActuel = user;
+        await chargerDonneesUtilisateur(user);
+        if (!donneesUtilisateur) await creerNouvelUtilisateur(user);
+        ETAT_APP.tutorielVu = donneesUtilisateur?.tutorielVu || false;
+        document.getElementById('ecran-auth').classList.remove('active');
+        document.getElementById('ecran-chargement').classList.remove('active');
+        if (!ETAT_APP.tutorielVu) lancerTutoriel();
+        else afficherEcran('ecran-lobby');
+        mettreAJourTouteInterface();
+      } else {
+        utilisateurActuel = null;
+        donneesUtilisateur = null;
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('ecran-auth').classList.add('active');
+      }
+    });
   }
 
   function afficherErreurAuth(msg) {
     document.getElementById('auth-erreur').textContent = msg;
   }
-      // ═══ MODAL RESET PASSWORD ═══
+
+  // ═══ MODAL RESET PASSWORD ═══
   function afficherModalResetPassword() {
     document.getElementById('modal-reset-password').classList.add('active');
   }
@@ -862,26 +882,6 @@
       afficherToast('❌ ' + (err.message || 'Erreur'), 'erreur');
     }
   }
-
-  // ═══ ÉTAT UTILISATEUR ═══
-  auth?.onAuthStateChanged(async (user) => {
-    if (user) {
-      utilisateurActuel = user;
-      await chargerDonneesUtilisateur(user);
-      if (!donneesUtilisateur) await creerNouvelUtilisateur(user);
-      ETAT_APP.tutorielVu = donneesUtilisateur?.tutorielVu || false;
-      document.getElementById('ecran-auth').classList.remove('active');
-      document.getElementById('ecran-chargement').classList.remove('active');
-      if (!ETAT_APP.tutorielVu) lancerTutoriel();
-      else afficherEcran('ecran-lobby');
-      mettreAJourTouteInterface();
-    } else {
-      utilisateurActuel = null;
-      donneesUtilisateur = null;
-      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-      document.getElementById('ecran-auth').classList.add('active');
-    }
-  });
 
   async function chargerDonneesUtilisateur(user) {
     if (!db) return null;
@@ -1320,7 +1320,7 @@
     mettreAJourChatAffichage();
   }
 
-  function mettureAJourChatAffichage() {
+  function mettreAJourChatAffichage() {
     const cont = document.getElementById('match-chat-msgs');
     if(!cont) return;
     cont.innerHTML = ETAT_APP.messagesChat.slice(-8).map(m => `
@@ -1377,7 +1377,8 @@
   async function renderClassement() {
     const cont = document.getElementById('contenu-classement');
     cont.innerHTML = '<div class="chargement-classement">⏳ Chargement du classement...</div>';
-      try {
+    
+    try {
       // Essayer le cache d'abord
       let classement = getFromCache(CACHE_KEYS.LEADERBOARD);
       
@@ -1587,7 +1588,7 @@
     if(refCode) ETAT_APP.parrainageEnAttente = refCode;
   });
 
-  // Fonction utilitaire pour chat (fix typo)
+  // Fonction utilitaire pour chat (corrigée)
   function mettreAJourChatAffichage() {
     const cont = document.getElementById('match-chat-msgs');
     if(!cont) return;
