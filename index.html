@@ -2,79 +2,574 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>AYITOPIA – Arène de Quiz Compétitive Haïtienne</title>
+  <meta name="description" content="Plateforme de quiz compétitive en temps réel. Affrontez des joueurs du monde entier, grimpez au classement et gagnez des récompenses.">
+  <meta name="theme-color" content="#08080f">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚔️</text></svg>">
+
   <!-- Firebase Compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
   <style>
-    /* Minimal cleaned styles (kept compact to avoid accidental truncation) */
-    :root{--bg:#08080f;--card:#141420;--blue:#00d4ff;--muted:#6a6a82;--text:#eaeaef}
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:Segoe UI,system-ui}
-    #app-root{height:100%;padding:16px}
-    .screen{display:none;height:100%}
-    .screen.active{display:block}
-    .logo-pulse{font-weight:900;font-size:40px;background:linear-gradient(135deg,var(--blue),#b44dff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .auth-container{max-width:420px;margin:24px auto;background:var(--card);padding:20px;border-radius:12px}
-    .btn{padding:10px 16px;border-radius:10px;font-weight:700;cursor:pointer}
-    .btn-primaire{background:linear-gradient(135deg,var(--blue),#0099cc);color:#000}
-    .categorie-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
-    .recompense-card{background:var(--card);padding:12px;border-radius:12px;margin-bottom:10px}
+    :root {
+      --bg-primary: #08080f;
+      --bg-secondary: #0f0f18;
+      --bg-card: #141420;
+      --bg-card-hover: #1a1a28;
+      --neon-blue: #00d4ff;
+      --neon-blue-dim: #0088aa;
+      --neon-red: #ff2d4b;
+      --neon-gold: #ffb800;
+      --neon-green: #00e676;
+      --neon-purple: #b44dff;
+      --text-primary: #eaeaef;
+      --text-secondary: #a8a8bc;
+      --text-muted: #6a6a82;
+      --border-subtle: #1e1e30;
+      --border-glow: rgba(0, 212, 255, 0.25);
+      --shadow-glow: 0 0 30px rgba(0, 212, 255, 0.15);
+      --shadow-gold: 0 0 30px rgba(255, 184, 0, 0.2);
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-xl: 28px;
+      --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      --transition-fast: 0.15s ease;
+      --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+
+    html, body {
+      width:100%; height:100%; overflow:hidden;
+      font-family:var(--font-main);
+      background:#000;
+      color:var(--text-primary);
+      -webkit-tap-highlight-color:transparent;
+      -webkit-font-smoothing:antialiased;
+      user-select:none;
+      -webkit-user-select:none;
+    }
+
+    #app-root {
+      width:100%; height:100%;
+      max-width:100%;
+      margin:0 auto;
+      position:relative;
+      overflow:hidden;
+      background:var(--bg-primary);
+      box-shadow:0 0 60px rgba(0,0,0,0.8);
+    }
+    @media (min-width: 768px) {
+      #app-root {
+        max-width: 768px;
+        border-left:1px solid var(--border-subtle);
+        border-right:1px solid var(--border-subtle);
+        border-radius:var(--radius-xl);
+        margin-top:10px;
+        height:calc(100% - 20px);
+      }
+    }
+    @media (min-width: 1024px) {
+      #app-root {
+        max-width: 960px;
+        height:calc(100% - 40px);
+        margin-top:20px;
+      }
+    }
+
+    /* ── ÉCRANS ── */
+    .screen {
+      position:absolute; inset:0;
+      display:none;
+      flex-direction:column;
+      overflow-y:auto; overflow-x:hidden;
+      padding:16px;
+      background:var(--bg-primary);
+      z-index:1;
+    }
+    .screen.active {
+      display:flex;
+      z-index:10;
+    }
+
+    /* ── CHARGEMENT ── */
+    #ecran-chargement {
+      display:flex; align-items:center; justify-content:center; flex-direction:column; gap:24px; z-index:100;
+      background: var(--bg-primary);
+    }
+    .logo-pulse {
+      font-size:48px; font-weight:900; letter-spacing:2px;
+      background:linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+      background-clip:text;
+      animation:pulse-glow 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-glow {
+      0%,100% { filter:brightness(1); }
+      50% { filter:brightness(1.6); }
+    }
+    .loader-bar { width:120px; height:4px; background:var(--border-subtle); border-radius:4px; overflow:hidden; }
+    .loader-bar-fill { height:100%; background:var(--neon-blue); border-radius:4px; animation:load-slide 1.2s ease-in-out infinite; }
+    @keyframes load-slide {
+      0% { width:0; margin-left:0; }
+      50% { width:60%; margin-left:20%; }
+      100% { width:0; margin-left:100%; }
+    }
+
+    /* ── AUTHENTIFICATION ── */
+    .auth-container {
+      max-width:400px; width:100%; margin:auto;
+      background:var(--bg-card); border-radius:var(--radius-lg);
+      padding:24px; border:1px solid var(--border-subtle);
+      box-shadow:var(--shadow-glow);
+    }
+    .auth-tabs { display:flex; gap:0; margin-bottom:20px; }
+    .auth-tab {
+      flex:1; text-align:center; padding:10px; cursor:pointer;
+      background:var(--bg-card-hover); border:1px solid var(--border-subtle);
+      font-weight:700; font-size:14px; color:var(--text-secondary);
+      transition:all var(--transition-fast);
+    }
+    .auth-tab:first-child { border-radius:var(--radius-sm) 0 0 var(--radius-sm); }
+    .auth-tab:last-child { border-radius:0 var(--radius-sm) var(--radius-sm) 0; }
+    .auth-tab.active {
+      background:var(--neon-blue); color:#000; border-color:var(--neon-blue);
+    }
+    .auth-field { margin-bottom:12px; }
+    .auth-field label {
+      display:block; font-size:12px; color:var(--text-muted); margin-bottom:4px;
+      text-transform:uppercase; letter-spacing:1px;
+    }
+    .auth-field input {
+      width:100%; padding:12px; background:var(--bg-secondary);
+      border:1px solid var(--border-subtle); border-radius:var(--radius-sm);
+      color:var(--text-primary); font-size:14px; outline:none;
+      font-family:inherit;
+    }
+    .auth-field input:focus { border-color:var(--neon-blue); }
+    .auth-link { color:var(--neon-blue); cursor:pointer; font-size:11px; text-decoration:underline; }
+
+    /* ── TUTORIEL ── */
+    #tutoriel-overlay {
+      position:fixed; inset:0; z-index:200;
+      background:rgba(0,0,0,0.92); backdrop-filter:blur(8px);
+      display:flex; align-items:center; justify-content:center; padding:20px;
+    }
+    #tutoriel-overlay.hidden { display:none; }
+    .tutoriel-card {
+      background:var(--bg-card); border:1px solid var(--border-glow);
+      border-radius:var(--radius-lg); padding:28px 22px; max-width:380px; width:100%;
+      text-align:center; box-shadow:var(--shadow-glow); animation:card-pop 0.4s ease;
+    }
+    @keyframes card-pop { 0%{transform:scale(0.85);opacity:0;} 100%{transform:scale(1);opacity:1;} }
+    .tutoriel-icone { font-size:64px; margin-bottom:12px; animation:bounce-icon 0.6s ease; }
+    @keyframes bounce-icon { 0%,100%{transform:translateY(0);} 30%{transform:translateY(-18px);} 50%{transform:translateY(0);} 70%{transform:translateY(-8px);} }
+    .tutoriel-titre { font-size:22px; font-weight:800; color:var(--neon-blue); margin-bottom:8px; }
+    .tutoriel-corps { font-size:14px; color:var(--text-secondary); line-height:1.6; margin-bottom:20px; }
+    .tutoriel-points { display:flex; gap:8px; justify-content:center; margin-bottom:18px; }
+    .tutoriel-point { width:10px; height:10px; border-radius:50%; background:var(--border-subtle); transition:all var(--transition-fast); }
+    .tutoriel-point.actif { background:var(--neon-blue); box-shadow:0 0 10px var(--neon-blue); width:28px; border-radius:10px; }
+    .tutoriel-point.fait { background:var(--neon-green); }
+    .tutoriel-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+
+    /* ── BOUTONS ── */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      padding:12px 24px; border-radius:var(--radius-md); font-weight:700; font-size:14px;
+      cursor:pointer; border:none; transition:all var(--transition-fast);
+      letter-spacing:0.3px; font-family:inherit; white-space:nowrap;
+    }
+    .btn:active { transform:scale(0.95); }
+    .btn:disabled { opacity:0.4; pointer-events:none; }
+    .btn-primaire { background:linear-gradient(135deg, var(--neon-blue), #0099cc); color:#000; box-shadow:0 4px 20px rgba(0,212,255,0.35); }
+    .btn-primaire:hover { box-shadow:0 6px 28px rgba(0,212,255,0.5); transform:translateY(-1px); }
+    .btn-secondaire { background:transparent; color:var(--neon-blue); border:2px solid var(--neon-blue); }
+    .btn-secondaire:hover { background:rgba(0,212,255,0.08); }
+    .btn-fantome { background:transparent; color:var(--text-secondary); border:1px solid var(--border-subtle); }
+    .btn-fantome:hover { border-color:var(--text-muted); color:var(--text-primary); }
+    .btn-danger { background:linear-gradient(135deg, var(--neon-red), #cc1030); color:#fff; box-shadow:0 4px 20px rgba(255,45,75,0.3); }
+    .btn-or { background:linear-gradient(135deg, var(--neon-gold), #e69900); color:#000; box-shadow:0 4px 20px rgba(255,184,0,0.35); font-weight:800; }
+    .btn-sm { padding:8px 16px; font-size:12px; border-radius:var(--radius-sm); }
+    .btn-lg { padding:15px 32px; font-size:16px; border-radius:var(--radius-lg); }
+    .btn-block { width:100%; justify-content:center; }
+
+    /* ── LOBBY ── */
+    .lobby-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:10px; }
+    .lobby-logo {
+      font-size:26px; font-weight:900; letter-spacing:1px;
+      background:linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .lobby-stats { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+    .stat-pill {
+      background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:20px;
+      padding:6px 14px; font-size:11px; font-weight:600; color:var(--text-secondary);
+      display:flex; align-items:center; gap:6px;
+    }
+    .live-dot { width:8px; height:8px; border-radius:50%; background:var(--neon-green); animation:live-pulse 1.5s infinite; }
+    @keyframes live-pulse { 0%,100%{box-shadow:0 0 0 0 rgba(0,230,118,0.6);} 50%{box-shadow:0 0 0 10px rgba(0,230,118,0);} }
+    .categorie-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:10px; margin-bottom:14px; }
+    .categorie-card {
+      background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md);
+      padding:16px 12px; cursor:pointer; transition:all var(--transition-smooth); text-align:center;
+      position:relative;
+    }
+    .categorie-card:hover { border-color:var(--neon-blue); box-shadow:0 0 20px rgba(0,212,255,0.1); transform:translateY(-2px); }
+    .categorie-card:active { transform:scale(0.96); }
+    .cat-icone { font-size:36px; margin-bottom:6px; }
+    .cat-nom { font-weight:700; font-size:13px; color:var(--text-primary); margin-bottom:2px; }
+    .cat-joueurs { font-size:10px; color:var(--text-muted); }
+    .cat-badge {
+      position:absolute; top:8px; right:8px; background:var(--neon-red); color:#fff;
+      font-size:9px; padding:3px 8px; border-radius:10px; font-weight:700;
+    }
+    .nav-onglets { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+    .nav-onglet {
+      padding:8px 16px; border-radius:20px; font-size:12px; font-weight:600; cursor:pointer;
+      background:var(--bg-card); border:1px solid var(--border-subtle); color:var(--text-secondary);
+      transition:all var(--transition-fast);
+    }
+    .nav-onglet.actif { background:var(--neon-blue); color:#000; border-color:var(--neon-blue); font-weight:700; }
+
+    /* ── MATCH ── */
+    .match-chrono { width:100%; height:6px; background:var(--border-subtle); border-radius:6px; overflow:hidden; margin-bottom:12px; }
+    .match-chrono-remplissage { height:100%; background:var(--neon-blue); border-radius:6px; transition:width 0.1s linear; }
+    .match-chrono-remplissage.urgent { background:var(--neon-red); animation:urgent-flash 0.5s infinite; }
+    @keyframes urgent-flash { 50%{opacity:0.5;} }
+    .match-num-question { font-size:11px; color:var(--text-muted); font-weight:600; text-transform:uppercase; margin-bottom:4px; }
+    .match-question { font-size:17px; font-weight:700; color:var(--text-primary); margin-bottom:16px; line-height:1.4; text-align:center; }
+    .match-options { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:12px; }
+    .match-option {
+      background:var(--bg-card); border:2px solid var(--border-subtle); border-radius:var(--radius-md);
+      padding:14px; cursor:pointer; font-weight:600; font-size:13px; text-align:center;
+      transition:all var(--transition-fast); color:var(--text-primary); min-height:50px;
+      display:flex; align-items:center; justify-content:center; word-break:break-word;
+    }
+    .match-option:hover { border-color:var(--neon-blue); background:var(--bg-card-hover); }
+    .match-option.correct { border-color:var(--neon-green)!important; background:rgba(0,230,118,0.15)!important; animation:correct-flash 0.5s ease; }
+    .match-option.incorrect { border-color:var(--neon-red)!important; background:rgba(255,45,75,0.15)!important; animation:shake 0.4s ease; }
+    @keyframes correct-flash { 0%,100%{transform:scale(1);} 50%{transform:scale(1.04);} }
+    @keyframes shake { 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+    .match-scores-live { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
+    .score-live-puce {
+      background:var(--bg-card); border-radius:16px; padding:6px 12px; font-size:11px; font-weight:600;
+      display:flex; align-items:center; gap:5px; border:1px solid var(--border-subtle);
+    }
+    .score-live-puce.moi { border-color:var(--neon-gold); box-shadow:0 0 8px rgba(255,184,0,0.2); }
+
+    .match-chat-zone {
+      background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-md);
+      padding:10px; margin-bottom:12px; max-height:120px; overflow-y:auto; font-size:12px;
+    }
+    .chat-msg { margin-bottom:6px; color:var(--text-secondary); }
+    .chat-msg-auteur { color:var(--neon-blue); font-weight:700; }
+    .chat-emojis { display:flex; gap:6px; margin-bottom:8px; }
+    .emoji-btn { background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:6px; padding:4px 8px; cursor:pointer; font-size:16px; }
+
+    /* ── RÉSULTATS ── */
+    .carte-resultats { background:var(--bg-card); border-radius:var(--radius-lg); padding:20px; text-align:center; border:1px solid var(--border-subtle); margin-bottom:12px; }
+    .rang-resultat { font-size:56px; font-weight:900; background:linear-gradient(135deg, var(--neon-gold), #ffaa00); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .xp-gagne { font-size:18px; font-weight:700; color:var(--neon-green); margin:8px 0; }
+    .changement-rang { font-weight:700; font-size:14px; }
+    .changement-rang.hausse { color:var(--neon-green); }
+    .changement-rang.baisse { color:var(--neon-red); }
+
+    /* ── CLASSEMENT ── */
+    .ligne-classement {
+      display:flex; align-items:center; gap:10px; padding:10px 14px;
+      background:var(--bg-card); border-radius:var(--radius-sm); margin-bottom:6px;
+      border:1px solid var(--border-subtle);
+    }
+    .ligne-classement.top1 { border-color:var(--neon-gold); box-shadow:0 0 12px rgba(255,184,0,0.2); background:linear-gradient(135deg, #1a1a10, var(--bg-card)); }
+    .ligne-classement.top2 { border-color:#c0c0c0; }
+    .ligne-classement.top3 { border-color:#cd7f32; }
+    .rang-numero { font-weight:900; font-size:18px; min-width:30px; text-align:center; }
+    .avatar-lb { width:36px; height:36px; border-radius:50%; background:var(--border-subtle); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; background-size:cover; background-position:center; }
+    .info-lb { flex:1; min-width:0; }
+    .nom-lb { font-weight:700; font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .stats-lb { font-size:10px; color:var(--text-muted); }
+    .score-lb { font-weight:800; font-size:14px; color:var(--neon-gold); }
+    .chargement-classement { text-align:center; color:var(--text-muted); font-size:12px; padding:20px; }
+
+    /* ── PROFIL ── */
+    .profil-avatar-grand {
+      width:80px; height:80px; border-radius:50%; background:var(--border-subtle);
+      margin:0 auto 12px; display:flex; align-items:center; justify-content:center;
+      font-size:40px; border:3px solid var(--neon-blue); box-shadow:0 0 25px rgba(0,212,255,0.2);
+      background-size:cover; background-position:center; cursor:pointer; position:relative;
+    }
+    .avatar-upload-overlay {
+      position:absolute; inset:0; background:rgba(0,0,0,0.5); border-radius:50%;
+      display:flex; align-items:center; justify-content:center; opacity:0; cursor:pointer;
+      transition:opacity var(--transition-fast);
+    }
+    .profil-avatar-grand:hover .avatar-upload-overlay { opacity:1; }
+    .avatar-upload-input { display:none; }
+    .profil-stat-grille { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:12px 0; }
+    .profil-stat-case { background:var(--bg-card); border-radius:var(--radius-sm); padding:14px; text-align:center; border:1px solid var(--border-subtle); }
+    .profil-stat-val { font-size:22px; font-weight:900; color:var(--neon-blue); }
+    .profil-stat-etiq { font-size:10px; color:var(--text-muted); text-transform:uppercase; letter-spacing:1px; }
+    .badge-rangee { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+    .badge-puce { padding:6px 12px; border-radius:16px; font-size:11px; font-weight:700; display:flex; align-items:center; gap:5px; }
+    .badge-recruteur { background:#ff6b2b22; color:#ff6b2b; border:1px solid #ff6b2b44; }
+    .badge-croissance { background:#c0c0c022; color:#c0c0c0; border:1px solid #c0c0c044; }
+    .badge-legende { background:#ffb80022; color:var(--neon-gold); border:1px solid #ffb80044; }
+
+    /* ── PARRAINAGE ── */
+    .ref-code-box {
+      background:var(--bg-card); border:2px dashed var(--neon-blue); border-radius:var(--radius-md);
+      padding:14px; text-align:center; font-family:'Courier New', monospace; font-size:18px;
+      font-weight:800; letter-spacing:2px; color:var(--neon-blue); margin:10px 0; word-break:break-all;
+    }
+    .ref-lien-rangee { display:flex; gap:8px; align-items:center; margin:8px 0; }
+    .ref-lien-input {
+      flex:1; background:var(--bg-card); border:1px solid var(--border-subtle); border-radius:var(--radius-sm);
+      padding:10px 12px; color:var(--text-primary); font-size:11px; font-family:monospace;
+      overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+    }
+
+    /* ── RÉCOMPENSES ── */
+    .recompense-card { background:var(--bg-card); border-radius:var(--radius-md); padding:16px; margin-bottom:10px; border:1px solid var(--border-subtle); display:flex; align-items:center; gap:12px; }
+    .recompense-icone { font-size:40px; }
+    .recompense-info { flex:1; }
+    .recompense-nom { font-weight:700; font-size:14px; }
+    .recompense-desc { font-size:11px; color:var(--text-muted); }
+    .recompense-statut { font-size:10px; padding:4px 10px; border-radius:10px; font-weight:700; }
+    .recompense-statut.dispo { background:#00e67622; color:var(--neon-green); }
+    .recompense-statut.verrou { background:#ff2d4b22; color:var(--neon-red); }
+
+    /* ── MODAL RESET PASSWORD ── */
+    .modal-overlay {
+      position:fixed; inset:0; z-index:300; background:rgba(0,0,0,0.92); backdrop-filter:blur(8px);
+      display:none; align-items:center; justify-content:center; padding:20px;
+    }
+    .modal-overlay.active { display:flex; }
+    .modal-contenu {
+      background:var(--bg-card); border:1px solid var(--border-glow); border-radius:var(--radius-lg);
+      padding:24px; max-width:380px; width:100%; box-shadow:var(--shadow-glow);
+    }
+    .modal-fermer { float:right; background:none; border:none; color:var(--text-secondary); cursor:pointer; font-size:24px; }
+    .modal-titre { font-size:20px; font-weight:800; color:var(--neon-blue); margin-bottom:16px; clear:both; }
+
+    /* ── BONUS QUOTIDIEN ── */
+    .bonus-card {
+      background: linear-gradient(135deg, rgba(255,184,0,0.1), rgba(255,184,0,0.05));
+      border: 1px solid var(--neon-gold);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      margin-bottom: 14px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
 <div id="app-root">
+  <!-- ÉCRAN DE CHARGEMENT -->
   <div id="ecran-chargement" class="screen active">
-    <div style="text-align:center;">
-      <div class="logo-pulse">AYITOPIA</div>
-      <div style="color:var(--muted);margin-top:12px">Connexion à l'arène…</div>
-    </div>
+    <div class="logo-pulse">AYITOPIA</div>
+    <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+    <div style="color:var(--text-muted);font-size:12px;">Connexion à l'arène…</div>
   </div>
 
+  <!-- ÉCRAN D'AUTHENTIFICATION -->
   <div id="ecran-auth" class="screen">
     <div class="auth-container">
-      <h3 style="text-align:center">Connexion</h3>
-      <form id="form-connexion">
-        <div style="margin-bottom:8px"><label>Email</label><input id="login-email" type="email" style="width:100%;padding:8px;border-radius:6px;background:#0f0f18;border:1px solid #1e1e30;color:var(--text)"></div>
-        <div style="margin-bottom:8px"><label>Mot de passe</label><input id="login-password" type="password" style="width:100%;padding:8px;border-radius:6px;background:#0f0f18;border:1px solid #1e1e30;color:var(--text)"></div>
-        <button type="submit" class="btn btn-primaire" style="width:100%">🔓 Se connecter</button>
-        <div id="auth-erreur" style="color:#ff2d4b;margin-top:8px;text-align:center"></div>
+      <div class="auth-tabs">
+        <div class="auth-tab active" data-form="connexion">Connexion</div>
+        <div class="auth-tab" data-form="inscription">Inscription</div>
+      </div>
+      <form id="form-connexion" style="display:block;">
+        <div class="auth-field"><label>Email</label><input type="email" id="login-email" placeholder="votre@email.com" required></div>
+        <div class="auth-field"><label>Mot de passe</label><input type="password" id="login-password" placeholder="••••••••" required></div>
+        <button type="submit" class="btn btn-primaire btn-block btn-lg">🔓 Se connecter</button>
+        <p style="color:var(--text-muted);font-size:11px;margin-top:8px;text-align:center;"><span class="auth-link" onclick="afficherModalResetPassword()">Mot de passe oublié ?</span></p>
       </form>
+      <form id="form-inscription" style="display:none;">
+        <div class="auth-field"><label>Pseudo</label><input type="text" id="signup-username" placeholder="Votre pseudo" required></div>
+        <div class="auth-field"><label>Email</label><input type="email" id="signup-email" placeholder="votre@email.com" required></div>
+        <div class="auth-field"><label>Code parrainage (optionnel)</label><input type="text" id="signup-refcode" placeholder="Laissez vide si aucun" maxlength="8"></div>
+        <div class="auth-field"><label>Mot de passe</label><input type="password" id="signup-password" placeholder="Min. 6 caractères" required minlength="6"></div>
+        <button type="submit" class="btn btn-primaire btn-block btn-lg">✨ Créer un compte</button>
+      </form>
+      <div id="auth-erreur" style="color:var(--neon-red);font-size:12px;margin-top:8px;text-align:center;"></div>
     </div>
   </div>
 
+  <!-- TUTORIEL -->
+  <div id="tutoriel-overlay" class="hidden"></div>
+
+  <!-- MODAL RESET PASSWORD -->
+  <div id="modal-reset-password" class="modal-overlay">
+    <div class="modal-contenu">
+      <button class="modal-fermer" onclick="fermerModalResetPassword()">✕</button>
+      <div class="modal-titre">Réinitialiser le mot de passe</div>
+      <p style="color:var(--text-secondary);font-size:12px;margin-bottom:12px;">Entrez votre email. Nous vous enverrons un lien de réinitialisation.</p>
+      <input type="email" id="reset-email" placeholder="votre@email.com" style="width:100%; padding:10px; background:var(--bg-secondary); border:1px solid var(--border-subtle); border-radius:var(--radius-sm); color:var(--text-primary); margin-bottom:12px;">
+      <button class="btn btn-primaire btn-block" onclick="envoyerResetPassword()">Envoyer le lien</button>
+    </div>
+  </div>
+
+  <!-- LOBBY -->
   <div id="ecran-lobby" class="screen">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-      <div style="font-weight:900">⚔️ AYITOPIA</div>
-      <button class="btn" onclick="afficherEcran('ecran-profil')">👤 Profil</button>
+    <div class="lobby-header">
+      <div class="lobby-logo">⚔️ AYITOPIA</div>
+      <button class="btn btn-fantome btn-sm" onclick="afficherEcran('ecran-profil')">👤 Profil</button>
+    </div>
+    <div id="bonus-quotidien" class="bonus-card" style="display:none;">
+      <div style="font-weight:800;color:var(--neon-gold);">🎁 Bonus quotidien !</div>
+      <div style="font-size:12px;color:var(--text-secondary);margin-top:4px;">+25 points pour votre connexion du jour</div>
+      <button class="btn btn-or btn-sm" style="margin-top:8px;" onclick="reclamerBonusQuotidien()">Récupérer</button>
+    </div>
+    <div class="lobby-stats" id="lobby-stats-row">
+      <div class="stat-pill"><span class="live-dot"></span> <span id="global-en-ligne">0</span> en ligne</div>
+      <div class="stat-pill">🏆 <span id="affichage-rang-utilisateur">--</span></div>
+      <div class="stat-pill">⭐ <span id="affichage-score-utilisateur">0</span> pts</div>
+    </div>
+    <div class="nav-onglets" id="lobby-nav-onglets">
+      <div class="nav-onglet actif" data-onglet="jouer">🎮 Jouer</div>
+      <div class="nav-onglet" data-onglet="classement">🏆 Classement</div>
+      <div class="nav-onglet" data-onglet="parrainage">👥 Parrainage</div>
+      <div class="nav-onglet" data-onglet="recompenses">🎁 Récompenses</div>
     </div>
     <div id="lobby-contenu-onglet"></div>
   </div>
 
-  <div id="ecran-recompenses" class="screen">
-    <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
-      <div style="font-weight:700">🎁 Récompenses</div>
-      <button class="btn" onclick="afficherEcran('ecran-lobby')">← Retour</button>
+  <!-- CATÉGORIES -->
+  <div id="ecran-categorie" class="screen">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <button class="btn btn-fantome btn-sm" onclick="afficherEcran('ecran-lobby')">← Retour</button>
+      <span style="font-weight:700;font-size:16px;">Choisir une catégorie</span>
     </div>
-    <div id="liste-recompenses"></div>
+    <div class="categorie-grid" id="categorie-grid"></div>
+    <button class="btn btn-or btn-block" style="margin-top:12px;" onclick="choisirCategorieAleatoire()">🎲 Mode aléatoire</button>
   </div>
 
-  <div id="ecran-profil" class="screen">
-    <div style="margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
-      <div style="font-weight:700">👤 Mon Profil</div>
-      <button class="btn" onclick="afficherEcran('ecran-lobby')">← Retour</button>
+  <!-- MATCHMAKING -->
+  <div id="ecran-matchmaking" class="screen">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <button class="btn btn-fantome btn-sm" id="mm-annuler-btn">← Annuler</button>
+      <span style="font-weight:700;font-size:16px;">Recherche de match</span>
     </div>
-    <div style="text-align:center">👤<div id="profil-pseudo">Joueur</div></div>
+    <div class="matchmaking-anim">
+      <div class="mm-spinner"></div>
+      <div class="mm-texte">Recherche d'adversaires…</div>
+      <div class="mm-compte" id="mm-file-compte">0</div>
+      <div style="color:var(--text-muted);font-size:12px;">joueurs en attente</div>
+      <div style="color:var(--text-muted);font-size:11px;" id="mm-nom-categorie"></div>
+    </div>
+  </div>
+
+  <!-- MATCH -->
+  <div id="ecran-match" class="screen">
+    <div class="match-chrono"><div class="match-chrono-remplissage" id="match-chrono-remplissage"></div></div>
+    <div class="match-num-question" id="match-num-question">Question 1 / 10</div>
+    <div class="match-question" id="match-question"></div>
+    <div class="match-options" id="match-options"></div>
+    <div id="match-chat-conteneur"></div>
+    <div class="match-scores-live" id="match-scores-live"></div>
+  </div>
+
+  <!-- RÉSULTATS -->
+  <div id="ecran-resultats" class="screen">
+    <div class="carte-resultats" id="contenu-resultats"></div>
+    <button class="btn btn-primaire btn-block btn-lg" onclick="afficherEcran('ecran-lobby')">🏠 Retour au lobby</button>
+    <button class="btn btn-secondaire btn-block" style="margin-top:8px;" onclick="relancerMatchmaking()">🔄 Rejouer</button>
+  </div>
+
+  <!-- CLASSEMENT -->
+  <div id="ecran-classement" class="screen">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <button class="btn btn-fantome btn-sm" onclick="afficherEcran('ecran-lobby')">← Retour</button>
+      <span style="font-weight:700;font-size:16px;">🏆 Classement</span>
+    </div>
+    <div class="nav-onglets" id="classement-onglets">
+      <div class="nav-onglet actif" data-classement="global">🌍 Global</div>
+      <div class="nav-onglet" data-classement="hebdo">📊 Hebdo</div>
+    </div>
+    <div id="contenu-classement"></div>
+  </div>
+
+  <!-- PROFIL -->
+  <div id="ecran-profil" class="screen">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <button class="btn btn-fantome btn-sm" onclick="afficherEcran('ecran-lobby')">← Retour</button>
+      <span style="font-weight:700;font-size:16px;">👤 Mon Profil</span>
+    </div>
+    <div class="profil-avatar-grand" id="profil-avatar">
+      👤
+      <div class="avatar-upload-overlay">📷</div>
+      <input type="file" id="avatar-upload-input" class="avatar-upload-input" accept="image/*">
+    </div>
+    <!-- Sélecteur d'avatars prédéfinis -->
+    <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0;">
+      <button onclick="changerAvatarEmoji('👤')" style="font-size:24px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;padding:6px;cursor:pointer;">👤</button>
+      <button onclick="changerAvatarEmoji('🦁')" style="font-size:24px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;padding:6px;cursor:pointer;">🦁</button>
+      <button onclick="changerAvatarEmoji('🐉')" style="font-size:24px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;padding:6px;cursor:pointer;">🐉</button>
+      <button onclick="changerAvatarEmoji('⚡')" style="font-size:24px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;padding:6px;cursor:pointer;">⚡</button>
+      <button onclick="changerAvatarEmoji('🔥')" style="font-size:24px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;padding:6px;cursor:pointer;">🔥</button>
+      <button onclick="changerAvatarEmoji('💎')" style="font-size:24px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;padding:6px;cursor:pointer;">💎</button>
+      <button onclick="changerAvatarEmoji('🌟')" style="font-size:24px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;padding:6px;cursor:pointer;">🌟</button>
+      <button onclick="changerAvatarEmoji('🎯')" style="font-size:24px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;padding:6px;cursor:pointer;">🎯</button>
+      <button onclick="changerAvatarEmoji('🔮')" style="font-size:24px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;padding:6px;cursor:pointer;">🔮</button>
+      <button onclick="changerAvatarEmoji('🎭')" style="font-size:24px;background:var(--bg-card);border:1px solid var(--border-subtle);border-radius:8px;padding:6px;cursor:pointer;">🎭</button>
+    </div>
+    <div style="text-align:center;font-weight:800;font-size:18px;" id="profil-pseudo">Joueur</div>
+    <div style="text-align:center;color:var(--text-muted);font-size:11px;" id="profil-code-ref">Code : ---</div>
+    <div class="profil-stat-grille">
+      <div class="profil-stat-case"><div class="profil-stat-val" id="prof-victoires">0</div><div class="profil-stat-etiq">Victoires</div></div>
+      <div class="profil-stat-case"><div class="profil-stat-val" id="prof-score">0</div><div class="profil-stat-etiq">Score total</div></div>
+      <div class="profil-stat-case"><div class="profil-stat-val" id="prof-precision">0%</div><div class="profil-stat-etiq">Précision</div></div>
+      <div class="profil-stat-case"><div class="profil-stat-val" id="prof-rang">--</div><div class="profil-stat-etiq">Rang global</div></div>
+    </div>
+    <div style="font-weight:700;font-size:13px;margin-top:8px;">🏅 Badges</div>
+    <div class="badge-rangee" id="profil-badges"></div>
+    <button class="btn btn-danger btn-block btn-sm" style="margin-top:16px;" onclick="deconnexion()">🚪 Déconnexion</button>
+  </div>
+
+  <!-- PARRAINAGE -->
+  <div id="ecran-parrainage" class="screen">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <button class="btn btn-fantome btn-sm" onclick="afficherEcran('ecran-lobby')">← Retour</button>
+      <span style="font-weight:700;font-size:16px;">👥 Parrainage</span>
+    </div>
+    <div style="text-align:center;font-weight:700;color:var(--neon-gold);">Invitez vos amis et gagnez des points !</div>
+    <div style="text-align:center;font-size:12px;color:var(--text-muted);">+10 pts par filleul • +1 pt par partage WhatsApp (max 5/jour)</div>
+    <div class="ref-code-box" id="ref-code-box">----</div>
+    <div class="ref-lien-rangee">
+      <input class="ref-lien-input" id="ref-lien-input" readonly value="" />
+      <button class="btn btn-primaire btn-sm" onclick="copierLienParrainage()">📋 Copier</button>
+    </div>
+    <button class="btn btn-or btn-block" style="margin-top:8px;" onclick="partagerWhatsApp()">📲 Partager sur WhatsApp</button>
+    <div style="margin-top:12px;font-weight:700;font-size:13px;">📊 Mes stats de parrainage</div>
+    <div style="color:var(--text-secondary);font-size:13px;" id="ref-stats">Invitations : 0 | Points : 0</div>
+  </div>
+
+  <!-- RÉCOMPENSES -->
+  <div id="ecran-recompenses" class="screen">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+      <button class="btn btn-fantome btn-sm" onclick="afficherEcran('ecran-lobby')">← Retour</button>
+      <span style="font-weight:700;font-size:16px;">🎁 Récompenses</span>
+    </div>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Les meilleurs joueurs hebdomadaires peuvent gagner des récompenses réelles</div>
+    <div id="liste-recompenses"></div>
+    <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:10px;">⚠️ Seuls les meilleurs classements sont éligibles. Récompenses limitées pour éviter les abus.</div>
   </div>
 </div>
 
 <div class="toast-conteneur" id="toast-conteneur"></div>
 
 <script>
-  // Cleaned script: fixes the broken reward block and ensures no syntax errors
+  // ═══════════════════════════════════════════════════════════════
+  //  AYITOPIA - Plateforme de quiz compétitive haïtienne v3.0
+  //  Intégration ImgBB, avatars prédéfinis, mode aléatoire,
+  //  bonus quotidien, correction splash screen, bugs corrigés.
+  // ═══════════════════════════════════════════════════════════════
+
   const CONFIG_FIREBASE = {
     apiKey: "AIzaSyB_RlBCLdowQeeEQ-jOsmXbHMlTGsPXrBI",
     authDomain: "ayitopia.firebaseapp.com",
@@ -85,89 +580,846 @@
     measurementId: "G-FXJX9C501N"
   };
 
-  let auth=null, db=null, storage=null, utilisateurActuel=null, donneesUtilisateur=null;
+  const IMGBB_API_KEY = "555e4fae57d7a9f253b9a34addfe8609"; // Clé fournie
 
-  function initialiserFirebase(){
-    try{
+  const MODE_DEMO = false;
+  let firebasePret = false;
+  let auth = null;
+  let db = null;
+  let storage = null;
+  let utilisateurActuel = null;
+  let donneesUtilisateur = null;
+
+  // ═══ CACHE ═══
+  const CACHE_KEYS = {
+    USER_DATA: 'ayitopia_user_data',
+    LEADERBOARD: 'ayitopia_leaderboard',
+  };
+  const CACHE_DURATIONS = {
+    USER_DATA: 5*60*1000,
+    LEADERBOARD: 60*1000,
+  };
+  function getFromCache(key) {
+    try {
+      const data = localStorage.getItem(key);
+      const ts = localStorage.getItem(key+'_ts');
+      if(!data || !ts) return null;
+      if(Date.now() - parseInt(ts) > (CACHE_DURATIONS[key]||5*60*1000)) {
+        localStorage.removeItem(key); localStorage.removeItem(key+'_ts'); return null;
+      }
+      return JSON.parse(data);
+    } catch(e) { return null; }
+  }
+  function setInCache(key, data) {
+    try {
+      localStorage.setItem(key, JSON.stringify(data));
+      localStorage.setItem(key+'_ts', Date.now().toString());
+    } catch(e) {}
+  }
+
+  // ═══ ÉTAT APP ═══
+  const ETAT_APP = {
+    ecranActif: 'ecran-chargement',
+    etapeTutoriel: 0,
+    totalEtapesTutoriel: 8,
+    tutorielVu: false,
+    categorieChoisie: null,
+    nomCategorieChoisie: null,
+    idMatch: null,
+    donneesMatch: null,
+    indexJoueurMatch: -1,
+    indexQuestionActuelle: 0,
+    debutQuestion: 0,
+    limiteTempsQuestion: 20,
+    reponsesSoumises: [],
+    scoresMatch: {},
+    matchTermine: false,
+    ongletLobby: 'jouer',
+    ongletClassement: 'global',
+    parrainageEnAttente: null,
+    partagesWhatsAppQuotidiens: 0,
+    derniereDatePartage: null,
+    _timerInterval: null,
+    messagesChat: [],
+  };
+
+  // ═══ BANQUE DE QUESTIONS ÉTENDUE ═══
+  const BANQUE_QUESTIONS = {
+    'anglais-creole': [
+      { q: 'Traduisez : "Good morning" en créole haïtien', opts: ['Bonjou', 'Bonswa', 'Bon apremidi', 'Bon vwayaj'], correct: 0, difficulte: 1 },
+      { q: 'Traduisez : "How are you?" en créole haïtien', opts: ['Kijan ou ye?', 'Kisa ou vle?', 'Kote ou ale?', 'Kilè ou vini?'], correct: 0, difficulte: 1 },
+      { q: 'Que signifie "dlo" en français ?', opts: ['Eau', 'Feu', 'Terre', 'Vent'], correct: 0, difficulte: 1 },
+      { q: 'Traduisez : "Thank you very much"', opts: ['Mèsi anpil', 'Bonjou zanmi', 'Orevwa', 'Souple'], correct: 0, difficulte: 1 },
+      { q: 'Que signifie "zanmi" ?', opts: ['Ami', 'Ennemi', 'Famille', 'Professeur'], correct: 0, difficulte: 1 },
+      { q: 'Traduisez : "Where is the hospital?"', opts: ['Kote lopital la?', 'Kijan lopital la?', 'Kilè lopital?', 'Poukisa lopital?'], correct: 0, difficulte: 2 },
+      { q: 'Que signifie "manje" ?', opts: ['Manger', 'Dormir', 'Courir', 'Boire'], correct: 0, difficulte: 1 },
+      { q: 'Traduisez : "I love Haiti"', opts: ['Mwen renmen Ayiti', 'Mwen rayi Ayiti', 'Mwen kite Ayiti', 'Mwen bliye Ayiti'], correct: 0, difficulte: 2 },
+      { q: 'Que signifie "koulè" ?', opts: ['Couleur', 'École', 'Fleur', 'Argent'], correct: 0, difficulte: 2 },
+      { q: 'Traduisez : "See you tomorrow"', opts: ['Na wè demen', 'Na wè jodi a', 'Na wè yè', 'Na wè kounye a'], correct: 0, difficulte: 2 },
+      { q: 'Que signifie "kè" ?', opts: ['Cœur', 'Clé', 'Ciel', 'Chef'], correct: 0, difficulte: 1 },
+      { q: 'Traduisez : "What is your name?"', opts: ['Koman ou rele?', 'Kisa ou ye?', 'Poukisa ou rele?', 'Kilè ou rele?'], correct: 0, difficulte: 1 },
+    ],
+    'maths': [
+      { q: '15 × 8 = ?', opts: ['120', '110', '130', '115'], correct: 0, difficulte: 1 },
+      { q: 'Racine carrée de 144 ?', opts: ['12', '14', '10', '16'], correct: 0, difficulte: 1 },
+      { q: '3x + 7 = 22, x = ?', opts: ['5', '6', '4', '7'], correct: 0, difficulte: 2 },
+      { q: '25% de 400 ?', opts: ['100', '80', '120', '90'], correct: 0, difficulte: 1 },
+      { q: 'Angle restant : 60° et 80° ?', opts: ['40°', '50°', '30°', '60°'], correct: 0, difficulte: 2 },
+      { q: '144 ÷ 12 = ?', opts: ['12', '11', '13', '14'], correct: 0, difficulte: 1 },
+      { q: '7² = ?', opts: ['49', '48', '50', '47'], correct: 0, difficulte: 1 },
+    ],
+    'sciences': [
+      { q: 'Symbole chimique de l\'eau ?', opts: ['H₂O', 'CO₂', 'NaCl', 'O₂'], correct: 0, difficulte: 1 },
+      { q: 'Planète rouge ?', opts: ['Mars', 'Vénus', 'Jupiter', 'Saturne'], correct: 0, difficulte: 1 },
+      { q: 'Force qui nous maintient au sol ?', opts: ['Gravité', 'Magnétisme', 'Friction', 'Inertie'], correct: 0, difficulte: 1 },
+    ],
+    'biologie': [
+      { q: 'Centrale énergétique de la cellule ?', opts: ['Mitochondrie', 'Noyau', 'Ribosome', 'Golgi'], correct: 0, difficulte: 1 },
+      { q: 'Nombre de chromosomes humains ?', opts: ['46', '44', '48', '42'], correct: 0, difficulte: 1 },
+    ],
+    'chimie': [
+      { q: 'Symbole de l\'or ?', opts: ['Au', 'Ag', 'Fe', 'Cu'], correct: 0, difficulte: 1 },
+      { q: 'pH de l\'eau pure ?', opts: ['7', '0', '14', '5'], correct: 0, difficulte: 1 },
+    ],
+    'sciences-sociales': [
+      { q: 'Capitale d\'Haïti ?', opts: ['Port-au-Prince', 'Cap-Haïtien', 'Jacmel', 'Les Cayes'], correct: 0, difficulte: 1 },
+      { q: 'Indépendance d\'Haïti ?', opts: ['1804', '1791', '1810', '1820'], correct: 0, difficulte: 2 },
+    ],
+    'grammaire': [
+      { q: 'Phrase correcte ?', opts: ['Elle va à l\'école.', 'Elle aller à l\'école.', 'Elle allant.', 'Elle allé.'], correct: 0, difficulte: 1 },
+      { q: 'Participe passé de "courir" ?', opts: ['Couru', 'Courri', 'Courant', 'Courais'], correct: 0, difficulte: 1 },
+    ],
+    'culture-generale': [
+      { q: 'Plus grand océan ?', opts: ['Pacifique', 'Atlantique', 'Indien', 'Arctique'], correct: 0, difficulte: 1 },
+      { q: 'Nombre de continents ?', opts: ['7', '5', '6', '8'], correct: 0, difficulte: 1 },
+      { q: 'Monnaie d\'Haïti ?', opts: ['Gourde', 'Dollar', 'Euro', 'Peso'], correct: 0, difficulte: 1 },
+    ],
+  };
+  // Fusion pour éviter les vides
+  Object.keys(BANQUE_QUESTIONS).forEach(cat => {
+    if (BANQUE_QUESTIONS[cat].length < 5) {
+      const supplement = BANQUE_QUESTIONS['culture-generale'];
+      while (BANQUE_QUESTIONS[cat].length < 10) {
+        BANQUE_QUESTIONS[cat].push(supplement[Math.floor(Math.random()*supplement.length)]);
+      }
+    }
+  });
+
+  const META_CATEGORIES = {
+    'anglais-creole': { nom: 'Anglais → Créole', icone: '🗣️' },
+    'maths': { nom: 'Mathématiques', icone: '🔢' },
+    'sciences': { nom: 'Sciences', icone: '🔬' },
+    'biologie': { nom: 'Biologie', icone: '🧬' },
+    'chimie': { nom: 'Chimie', icone: '⚗️' },
+    'sciences-sociales': { nom: 'Sciences sociales', icone: '📚' },
+    'grammaire': { nom: 'Grammaire', icone: '📝' },
+    'culture-generale': { nom: 'Culture générale', icone: '🌐' },
+  };
+
+  // ═══ INIT FIREBASE ═══
+  function initialiserFirebase() {
+    try {
       firebase.initializeApp(CONFIG_FIREBASE);
-      auth = firebase.auth(); db = firebase.firestore(); storage = firebase.storage();
+      auth = firebase.auth();
+      db = firebase.firestore();
+      storage = firebase.storage(); // même si non utilisé, évite les erreurs
+      firebasePret = true;
       return true;
-    }catch(e){console.error('Firebase init error',e);return false}
+    } catch (e) {
+      console.error('Erreur Firebase:', e);
+      return false;
+    }
   }
 
-  function afficherEcran(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));const el=document.getElementById(id);if(el)el.classList.add('active');}
+  // ═══ AUTHENTIFICATION ═══
+  function configurerAuth() {
+    document.getElementById('ecran-auth').querySelector('.auth-tabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.auth-tab');
+      if (!tab) return;
+      document.querySelectorAll('#ecran-auth .auth-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('form-connexion').style.display = tab.dataset.form === 'connexion' ? 'block' : 'none';
+      document.getElementById('form-inscription').style.display = tab.dataset.form === 'inscription' ? 'block' : 'none';
+    });
 
-  function afficherToast(msg, type='info'){const c=document.getElementById('toast-conteneur');const t=document.createElement('div');t.textContent=msg;t.style.padding='8px 12px';t.style.background='#222';t.style.borderRadius='8px';c.appendChild(t);setTimeout(()=>t.remove(),3000)}
-
-  // Render rewards (fixed function) — replace previous broken fragment
-  function renderRecompenses(){
-    const recompenses = [
-      {icone:'🏅', nom:'Pack Bronze', desc:'Top 50 mensuel', cond:'Top 50'},
-      {icone:'🥈', nom:'Pack Argent', desc:'Top 20 mensuel', cond:'Top 20'},
-      {icone:'🥇', nom:'Pack Or', desc:'Top 5 mensuel', cond:'Top 5'},
-      {icone:'🎁', nom:'Pack Premium (Cash)', desc:'Top 1 mensuel', cond:'Top 1'}
-    ];
-    const html = recompenses.map(r=>`
-      <div class="recompense-card">
-        <div style="font-size:28px">${r.icone}</div>
-        <div>
-          <div style="font-weight:800">${r.nom}</div>
-          <div style="color:var(--muted);font-size:13px">${r.desc}</div>
-        </div>
-        <div style="font-weight:700;margin-top:8px">🔒 ${r.cond}</div>
-      </div>
-    `).join('');
-    const container = document.getElementById('liste-recompenses');
-    if(container) container.innerHTML = html;
-  }
-
-  function renderMiniRecompenses(){ renderRecompenses(); }
-
-  // Basic auth wiring (keeps app usable and avoids remaining errors)
-  function configurerAuth(){
-    const form = document.getElementById('form-connexion');
-    if(!form) return;
-    form.addEventListener('submit', async (e)=>{
+    document.getElementById('form-connexion').addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login-email').value.trim();
       const pwd = document.getElementById('login-password').value;
-      if(!email||!pwd) return document.getElementById('auth-erreur').textContent='Email et mot de passe requis';
-      try{ await auth.signInWithEmailAndPassword(email,pwd); afficherToast('✅ Connecté','succes'); }
-      catch(err){ document.getElementById('auth-erreur').textContent = err.message || 'Erreur de connexion' }
+      if (!email || !pwd) return afficherErreurAuth('Email et mot de passe requis');
+      try {
+        await auth.signInWithEmailAndPassword(email, pwd);
+        afficherToast('✅ Connecté avec succès', 'succes');
+      } catch (err) {
+        afficherErreurAuth(err.message || 'Erreur de connexion');
+      }
     });
 
-    auth.onAuthStateChanged(async (user)=>{
-      if(user){ utilisateurActuel = user; afficherEcran('ecran-lobby'); renderRecompenses(); }
-      else{ utilisateurActuel = null; afficherEcran('ecran-auth'); }
+    document.getElementById('form-inscription').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pseudo = document.getElementById('signup-username').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const refCode = document.getElementById('signup-refcode').value.trim();
+      const pwd = document.getElementById('signup-password').value;
+      if (!pseudo) return afficherErreurAuth('Le pseudo est requis');
+      if (!email) return afficherErreurAuth('L\'email est requis');
+      if (!pwd || pwd.length < 6) return afficherErreurAuth('Mot de passe (min. 6 caractères)');
+      try {
+        const cred = await auth.createUserWithEmailAndPassword(email, pwd);
+        await cred.user.updateProfile({ displayName: pseudo });
+        ETAT_APP.parrainageEnAttente = refCode || null;
+        afficherToast('🎉 Compte créé ! Bienvenue ' + pseudo, 'succes');
+      } catch (err) {
+        afficherErreurAuth(err.message || 'Erreur d\'inscription');
+      }
+    });
+    // ═══ ÉTAT UTILISATEUR (écouteur ici, dans configurerAuth) ═══
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        utilisateurActuel = user;
+        await chargerDonneesUtilisateur(user);
+        if (!donneesUtilisateur) await creerNouvelUtilisateur(user);
+        ETAT_APP.tutorielVu = donneesUtilisateur?.tutorielVu || false;
+        document.getElementById('ecran-auth').classList.remove('active');
+        document.getElementById('ecran-chargement').classList.remove('active');
+        if (!ETAT_APP.tutorielVu) lancerTutoriel();
+        else {
+          afficherEcran('ecran-lobby');
+          verifierBonusQuotidien();
+        }
+        mettreAJourTouteInterface();
+      } else {
+        utilisateurActuel = null;
+        donneesUtilisateur = null;
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('ecran-auth').classList.add('active');
+      }
     });
   }
 
-  // Minimal image resize helper (used elsewhere in original code)
-  function redimensionnerImage(file, maxW, maxH){
-    return new Promise((resolve,reject)=>{
-      const img = new Image();
+  function afficherErreurAuth(msg) {
+    document.getElementById('auth-erreur').textContent = msg;
+  }
+
+  // ═══ RESET PASSWORD ═══
+  function afficherModalResetPassword() {
+    document.getElementById('modal-reset-password').classList.add('active');
+  }
+  function fermerModalResetPassword() {
+    document.getElementById('modal-reset-password').classList.remove('active');
+  }
+  async function envoyerResetPassword() {
+    const email = document.getElementById('reset-email').value.trim();
+    if (!email) return afficherToast('⚠️ Entrez votre email', 'info');
+    try {
+      await auth.sendPasswordResetEmail(email);
+      afficherToast('📧 Email envoyé', 'succes');
+      fermerModalResetPassword();
+    } catch (err) { afficherToast('❌ ' + err.message, 'erreur'); }
+  }
+
+  // ═══ DONNÉES UTILISATEUR ═══
+  async function chargerDonneesUtilisateur(user) {
+    if (!db) return null;
+    const cached = getFromCache(CACHE_KEYS.USER_DATA);
+    if (cached) { donneesUtilisateur = cached; return cached; }
+    try {
+      const doc = await db.collection('utilisateurs').doc(user.uid).get();
+      if (doc.exists) {
+        donneesUtilisateur = doc.data();
+        setInCache(CACHE_KEYS.USER_DATA, donneesUtilisateur);
+      } else donneesUtilisateur = null;
+      return donneesUtilisateur;
+    } catch (e) { return null; }
+  }
+
+  async function creerNouvelUtilisateur(user) {
+    const data = {
+      username: user.displayName || 'Joueur',
+      avatar: '👤',
+      avatarUrl: null,
+      stats: { victoires:0, scoreTotal:0, precision:0, rang:9999, totalMatchs:0 },
+      codeParrainage: user.uid.substring(0,8).toUpperCase(),
+      parrainePar: ETAT_APP.parrainageEnAttente || null,
+      nombreParrainages: 0,
+      pointsParrainage: 0,
+      badges: [],
+      derniereConnexion: new Date().toISOString(),
+      tutorielVu: false,
+    };
+    try {
+      await db.collection('utilisateurs').doc(user.uid).set(data);
+      donneesUtilisateur = data;
+      setInCache(CACHE_KEYS.USER_DATA, data);
+      if (data.parrainePar) await traiterBonusParrainage(data.parrainePar, user.uid);
+    } catch (e) { console.error('Erreur création:', e); }
+  }
+
+  async function traiterBonusParrainage(codeParrain, nouvelId) {
+    if (!db) return;
+    const snap = await db.collection('utilisateurs').where('codeParrainage','==',codeParrain).limit(1).get();
+    if (!snap.empty) {
+      const ref = snap.docs[0];
+      await db.collection('utilisateurs').doc(ref.id).update({
+        nombreParrainages: firebase.firestore.FieldValue.increment(1),
+        pointsParrainage: firebase.firestore.FieldValue.increment(10),
+        'stats.scoreTotal': firebase.firestore.FieldValue.increment(10),
+      });
+      await db.collection('utilisateurs').doc(nouvelId).update({
+        'stats.scoreTotal': firebase.firestore.FieldValue.increment(5),
+      });
+    }
+  }
+
+  // ═══ AVATAR (ImgBB + prédéfinis) ═══
+  async function uploaderAvatarImgBB(file) {
+    const redim = await redimensionnerImage(file, 200, 200);
+    const base64 = redim.split(',')[1];
+    const form = new FormData();
+    form.append('image', base64);
+    const resp = await fetch(`https://api.imgbb.com/1/upload?key=${IMGBB_API_KEY}`, { method:'POST', body:form });
+    const json = await resp.json();
+    if (!json.success) throw new Error(json.error?.message || 'Erreur upload');
+    return json.data.url;
+  }
+
+  function redimensionnerImage(file, maxW, maxH) {
+    return new Promise((resolve) => {
       const reader = new FileReader();
-      reader.onload = function(ev){ img.src = ev.target.result; };
-      reader.onerror = reject;
-      img.onload = function(){
-        const canvas = document.createElement('canvas');
-        const ratio = Math.min(maxW/img.width, maxH/img.height, 1);
-        canvas.width = Math.round(img.width * ratio);
-        canvas.height = Math.round(img.height * ratio);
-        const ctx = canvas.getContext('2d'); ctx.drawImage(img,0,0,canvas.width,canvas.height);
-        resolve(canvas.toDataURL('image/jpeg',0.85));
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let w=img.width, h=img.height;
+          if(w>h){ if(w>maxW){ h*=maxW/w; w=maxW; } } else { if(h>maxH){ w*=maxH/h; h=maxH; } }
+          canvas.width=w; canvas.height=h;
+          canvas.getContext('2d').drawImage(img,0,0,w,h);
+          resolve(canvas.toDataURL('image/jpeg',0.8));
+        };
+        img.src=e.target.result;
       };
       reader.readAsDataURL(file);
     });
   }
 
-  window.onload = ()=>{
-    const ok = initialiserFirebase();
-    if(ok) configurerAuth();
-    else document.getElementById('ecran-chargement').innerHTML = '<div style="color:#ff2d4b;padding:20px;text-align:center">Erreur critique : Impossible de se connecter aux serveurs.</div>';
-    // show rewards in lobby for now
-    renderRecompenses();
-  };
+  async function changerAvatarEmoji(emoji) {
+    if (!utilisateurActuel || !db) return;
+    try {
+      await db.collection('utilisateurs').doc(utilisateurActuel.uid).update({ avatar: emoji, avatarUrl: null });
+      donneesUtilisateur.avatar = emoji;
+      donneesUtilisateur.avatarUrl = null;
+      setInCache(CACHE_KEYS.USER_DATA, donneesUtilisateur);
+      document.getElementById('profil-avatar').style.backgroundImage = 'none';
+      document.getElementById('profil-avatar').textContent = emoji;
+      afficherToast('✅ Avatar mis à jour !', 'succes');
+    } catch (e) { afficherToast('❌ Erreur', 'erreur'); }
+  }
+
+  // ═══ NAVIGATION ═══
+  function afficherEcran(idEcran) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const cible = document.getElementById(idEcran);
+    if (cible) { cible.classList.add('active'); cible.scrollTop = 0; }
+    ETAT_APP.ecranActif = idEcran;
+    if (idEcran === 'ecran-lobby') renderContenuOngletLobby();
+    if (idEcran === 'ecran-categorie') renderCategories();
+    if (idEcran === 'ecran-classement') renderClassement();
+    if (idEcran === 'ecran-profil') renderProfil();
+    if (idEcran === 'ecran-parrainage') renderEcranParrainage();
+    if (idEcran === 'ecran-recompenses') renderRecompenses();
+  }
+
+  // ═══ TUTORIEL ═══
+  const DIAPOS_TUTORIEL = [
+    { icone:'🎮', titre:'Bienvenue !', corps:'Arène de quiz compétitive haïtienne. Testez vos connaissances, défiez des adversaires et gravissez les échelons.' },
+    { icone:'⚔️', titre:'Matchs PvP', corps:'Affrontez de vrais joueurs ou des bots. Répondez vite pour gagner plus de points.' },
+    { icone:'⏱', titre:'Score vitesse', corps:'Bonus de rapidité, malus d\'erreur (-25). Le classement monte et descend.' },
+    { icone:'👥', titre:'Parrainage', corps:'Invitez vos amis, gagnez +10 points par inscription. Partagez sur WhatsApp.' },
+    { icone:'🎁', titre:'Récompenses réelles', corps:'Recharges Natcom/Digicel pour les meilleurs hebdomadaires.' },
+    { icone:'🚀', titre:'Prêt ?', corps:'L\'arène vous attend. Bonne chance ! 🇭🇹' },
+  ];
+  ETAT_APP.totalEtapesTutoriel = DIAPOS_TUTORIEL.length;
+
+  function lancerTutoriel() {
+    ETAT_APP.etapeTutoriel = 0;
+    document.getElementById('tutoriel-overlay').classList.remove('hidden');
+    renderDiapoTutoriel();
+  }
+  function renderDiapoTutoriel() {
+    const d = DIAPOS_TUTORIEL[ETAT_APP.etapeTutoriel];
+    const derniere = ETAT_APP.etapeTutoriel >= DIAPOS_TUTORIEL.length-1;
+    let pts = '';
+    for(let i=0;i<DIAPOS_TUTORIEL.length;i++) {
+      let cls = i<ETAT_APP.etapeTutoriel?'fait':(i===ETAT_APP.etapeTutoriel?'actif':'');
+      pts += `<div class="tutoriel-point ${cls}"></div>`;
+    }
+    document.getElementById('tutoriel-overlay').innerHTML = `
+      <div class="tutoriel-card">
+        <div class="tutoriel-icone">${d.icone}</div>
+        <div class="tutoriel-titre">${d.titre}</div>
+        <div class="tutoriel-corps">${d.corps}</div>
+        <div class="tutoriel-points">${pts}</div>
+        <div class="tutoriel-btns">
+          <button class="btn btn-fantome btn-sm" onclick="sauterTutoriel()">Passer</button>
+          <button class="btn btn-primaire" onclick="etapeSuivante()">${derniere?'🏁 Entrer':'Suivant →'}</button>
+        </div>
+      </div>`;
+  }
+  function etapeSuivante() {
+    ETAT_APP.etapeTutoriel++;
+    if(ETAT_APP.etapeTutoriel >= DIAPOS_TUTORIEL.length) terminerTutoriel();
+    else renderDiapoTutoriel();
+  }
+  function sauterTutoriel() { terminerTutoriel(); }
+  function terminerTutoriel() {
+    ETAT_APP.tutorielVu = true;
+    if(donneesUtilisateur) donneesUtilisateur.tutorielVu = true;
+    if(db) db.collection('utilisateurs').doc(utilisateurActuel.uid).update({tutorielVu:true}).catch(()=>{});
+    document.getElementById('tutoriel-overlay').classList.add('hidden');
+    afficherEcran('ecran-lobby');
+  }
+
+  // ═══ LOBBY ═══
+  function renderContenuOngletLobby() {
+    const cont = document.getElementById('lobby-contenu-onglet');
+    if(ETAT_APP.ongletLobby==='jouer') {
+      cont.innerHTML = `<div style="font-weight:700;margin-bottom:8px;">🔥 Catégories</div>
+        <div class="categorie-grid" id="lobby-cat-grid"></div>
+        <button class="btn btn-primaire btn-block btn-lg" onclick="afficherEcran('ecran-categorie')">📋 Toutes</button>`;
+      renderCategoriesLobby();
+    } else if(ETAT_APP.ongletLobby==='classement') {
+      cont.innerHTML = `<div id="lobby-classement-contenu"></div>`;
+      renderMiniClassement();
+    } else if(ETAT_APP.ongletLobby==='parrainage') {
+      cont.innerHTML = `<div style="text-align:center;font-weight:700;color:var(--neon-gold);">👥 Parrainage</div>
+        <div class="ref-code-box">${donneesUtilisateur?.codeParrainage||'----'}</div>
+        <button class="btn btn-or btn-block btn-sm" onclick="partagerWhatsApp()">📲 Partager</button>`;
+    } else if(ETAT_APP.ongletLobby==='recompenses') {
+      cont.innerHTML = `<div id="lobby-recompenses-liste"></div>`;
+      renderMiniRecompenses();
+    }
+  }
+
+  function renderCategoriesLobby() {
+    const grille = document.getElementById('lobby-cat-grid');
+    if(!grille) return;
+    const cats = Object.entries(META_CATEGORIES).slice(0,6);
+    grille.innerHTML = cats.map(([cle,meta]) => `
+      <div class="categorie-card" onclick="choisirCategorie('${cle}')">
+        <div class="cat-icone">${meta.icone}</div>
+        <div class="cat-nom">${meta.nom}</div>
+        <div class="cat-joueurs">${Math.floor(Math.random()*30)+10} joueurs</div>
+      </div>`).join('');
+  }
+  function renderCategories() {
+    const grille = document.getElementById('categorie-grid');
+    if(!grille) return;
+    grille.innerHTML = Object.entries(META_CATEGORIES).map(([cle,meta]) => `
+      <div class="categorie-card" onclick="choisirCategorie('${cle}')">
+        <div class="cat-icone">${meta.icone}</div>
+        <div class="cat-nom">${meta.nom}</div>
+        <div class="cat-joueurs">${Math.floor(Math.random()*30)+10} joueurs</div>
+      </div>`).join('');
+  }
+  function choisirCategorie(cle) {
+    ETAT_APP.categorieChoisie = cle;
+    ETAT_APP.nomCategorieChoisie = META_CATEGORIES[cle]?.nom||cle;
+    afficherEcran('ecran-matchmaking');
+    lancerMatchmaking(cle);
+  }
+  function choisirCategorieAleatoire() {
+    const cats = Object.keys(META_CATEGORIES);
+    const randomCat = cats[Math.floor(Math.random()*cats.length)];
+    choisirCategorie(randomCat);
+  }
+
+  // ═══ BONUS QUOTIDIEN ═══
+  function verifierBonusQuotidien() {
+    if (!donneesUtilisateur) return;
+    const dernierJour = donneesUtilisateur.derniereConnexion?.split('T')[0];
+    const aujourdhui = new Date().toISOString().split('T')[0];
+    if (dernierJour !== aujourdhui) {
+      document.getElementById('bonus-quotidien').style.display = 'block';
+    }
+  }
+  async function reclamerBonusQuotidien() {
+    if (!utilisateurActuel || !db) return;
+    try {
+      await db.collection('utilisateurs').doc(utilisateurActuel.uid).update({
+        'stats.scoreTotal': firebase.firestore.FieldValue.increment(25),
+        derniereConnexion: new Date().toISOString()
+      });
+      donneesUtilisateur.stats.scoreTotal += 25;
+      donneesUtilisateur.derniereConnexion = new Date().toISOString();
+      setInCache(CACHE_KEYS.USER_DATA, donneesUtilisateur);
+      document.getElementById('bonus-quotidien').style.display = 'none';
+      afficherToast('✅ +25 points de bonus quotidien !', 'succes');
+      mettreAJourTouteInterface();
+    } catch (e) { afficherToast('❌ Erreur', 'erreur'); }
+  }
+
+  // ═══ MATCHMAKING (4 BOTS PAR DÉFAUT) ═══
+  function lancerMatchmaking(cle) {
+    ETAT_APP.idMatch = null;
+    document.getElementById('mm-nom-categorie').textContent = 'Catégorie : ' + (META_CATEGORIES[cle]?.nom||cle);
+    document.getElementById('mm-file-compte').textContent = Math.floor(Math.random()*8)+2;
+    const delai = 1500 + Math.random()*3000;
+    setTimeout(() => {
+      if(ETAT_APP.ecranActif==='ecran-matchmaking') creerMatch(cle);
+    }, delai);
+    document.getElementById('mm-annuler-btn').onclick = () => afficherEcran('ecran-lobby');
+  }
+
+  function creerMatch(cle) {
+    const questions = genererQuestionsMatch(cle);
+    const nbBots = 4; // nombre de bots fixe, augmenté
+    const bots = genererBots(nbBots);
+    const joueurs = [
+      { uid: utilisateurActuel.uid, username: donneesUtilisateur.username, avatar: donneesUtilisateur.avatarUrl||donneesUtilisateur.avatar||'👤', estBot:false, score:0 },
+      ...bots
+    ];
+    ETAT_APP.donneesMatch = { categorie:cle, joueurs, questions, questionActuelle:0 };
+    ETAT_APP.idMatch = 'match_'+Date.now();
+    ETAT_APP.indexQuestionActuelle = 0;
+    ETAT_APP.scoresMatch = {};
+    ETAT_APP.messagesChat = [];
+    joueurs.forEach(p => ETAT_APP.scoresMatch[p.uid]=0);
+    ETAT_APP.matchTermine = false;
+    afficherEcran('ecran-match');
+    lancerQuestion(0);
+  }
+
+  function genererBots(nb) {
+    const noms = ['OmbreLame','FantomeQuiz','RoiVitesse','FauconNuit','EspritTonnerre','FeuRapide','ShadowBrain','CyberMind'];
+    const avatars = ['🦊','🐺','🦅','⚡','🔥','💀','🤖','👾'];
+    const bots = [];
+    for(let i=0;i<nb;i++) {
+      bots.push({
+        uid: 'bot_'+i+'_'+Date.now(),
+        username: noms[i%noms.length]+Math.floor(Math.random()*100),
+        avatar: avatars[i%avatars.length],
+        estBot:true, score:0,
+        niveau: 0.5 + Math.random()*0.4,
+        facteurVitesse: 0.3+Math.random()*0.6
+      });
+    }
+    return bots;
+  }
+
+  // ═══ MATCH ═══ (inchangé logique mais avec le chat)
+  function genererQuestionsMatch(cle) {
+    const banque = BANQUE_QUESTIONS[cle] || BANQUE_QUESTIONS['culture-generale'];
+    const mel = [...banque].sort(()=>Math.random()-0.5).slice(0,10);
+    while(mel.length<10) mel.push(banque[Math.floor(Math.random()*banque.length)]);
+    return mel.map((q,i)=>({...q, id:'q'+i, limiteTemps: q.difficulte===3?25:q.difficulte===2?20:15}));
+  }
+
+  function lancerQuestion(index) {
+    if(index>=10 || ETAT_APP.matchTermine) { terminerMatch(); return; }
+    ETAT_APP.indexQuestionActuelle = index;
+    ETAT_APP.reponsesSoumises = [];
+    const q = ETAT_APP.donneesMatch.questions[index];
+    ETAT_APP.debutQuestion = Date.now();
+    ETAT_APP.limiteTempsQuestion = q.limiteTemps||20;
+    document.getElementById('match-num-question').textContent = `Question ${index+1} / 10`;
+    document.getElementById('match-question').textContent = q.q;
+    document.getElementById('match-options').innerHTML = q.opts.map((opt,i) => `
+      <div class="match-option" data-index="${i}" onclick="soumettreReponse(${i})">${opt}</div>`).join('');
+    document.getElementById('match-chat-conteneur').innerHTML = `
+      <div class="match-chat-zone" id="match-chat-msgs"></div>
+      <div class="chat-emojis">
+        <button class="emoji-btn" onclick="envoyerChatEmoji('👍')">👍</button>
+        <button class="emoji-btn" onclick="envoyerChatEmoji('🔥')">🔥</button>
+        <button class="emoji-btn" onclick="envoyerChatEmoji('😂')">😂</button>
+        <button class="emoji-btn" onclick="envoyerChatEmoji('💯')">💯</button>
+      </div>`;
+    document.getElementById('match-chrono-remplissage').style.width='100%';
+    document.getElementById('match-chrono-remplissage').classList.remove('urgent');
+    mettreAJourScoresLive();
+
+    ETAT_APP.donneesMatch.joueurs.forEach(p => {
+      if((p.estBot) && !ETAT_APP.reponsesSoumises.includes(p.uid)) {
+        const delai = (p.estBot ? p.facteurVitesse : 0.5+Math.random()*0.4) * ETAT_APP.limiteTempsQuestion * 1000;
+        const correct = Math.random() < (p.niveau||0.6);
+        const rep = correct ? q.correct : Math.floor(Math.random()*q.opts.length);
+        setTimeout(() => {
+          if(!ETAT_APP.reponsesSoumises.includes(p.uid) && ETAT_APP.indexQuestionActuelle===index)
+            traiterReponseBot(p, rep, q);
+        }, Math.max(800, delai));
+      }
+    });
+
+    const barre = document.getElementById('match-chrono-remplissage');
+    const totalMs = ETAT_APP.limiteTempsQuestion*1000;
+    if(ETAT_APP._timerInterval) clearInterval(ETAT_APP._timerInterval);
+    ETAT_APP._timerInterval = setInterval(() => {
+      if(ETAT_APP.matchTermine || ETAT_APP.indexQuestionActuelle!==index) { clearInterval(ETAT_APP._timerInterval); return; }
+      const reste = Math.max(0, totalMs - (Date.now()-ETAT_APP.debutQuestion));
+      barre.style.width = (reste/totalMs*100)+'%';
+      if(reste/totalMs<0.25) barre.classList.add('urgent');
+      if(reste<=0) { clearInterval(ETAT_APP._timerInterval); passerQuestionSuivante(); }
+    }, 100);
+  }
+
+  function soumettreReponse(optIndex) {
+    const uid = utilisateurActuel.uid;
+    if(ETAT_APP.reponsesSoumises.includes(uid)) return;
+    ETAT_APP.reponsesSoumises.push(uid);
+    const q = ETAT_APP.donneesMatch.questions[ETAT_APP.indexQuestionActuelle];
+    const correct = optIndex===q.correct;
+    const temps = (Date.now()-ETAT_APP.debutQuestion)/1000;
+    const bonusVitesse = Math.floor(Math.max(0,1-temps/ETAT_APP.limiteTempsQuestion)*50);
+    const points = correct ? 100 + bonusVitesse + (ETAT_APP.reponsesSoumises.length===1?25:0) : -25;
+    ETAT_APP.scoresMatch[uid] = (ETAT_APP.scoresMatch[uid]||0)+points;
+    document.querySelectorAll('.match-option').forEach((opt,i) => {
+      opt.style.pointerEvents='none';
+      if(i===q.correct) opt.classList.add('correct');
+      if(i===optIndex && !correct) opt.classList.add('incorrect');
+      if(i===optIndex && correct) opt.classList.add('correct');
+    });
+    mettreAJourScoresLive();
+    if(correct) envoyerChatEmoji('💯');
+    setTimeout(() => { if(!ETAT_APP.matchTermine) passerQuestionSuivante(); }, 1200);
+  }
+
+  function traiterReponseBot(bot, rep, q) {
+    if(ETAT_APP.reponsesSoumises.includes(bot.uid)) return;
+    ETAT_APP.reponsesSoumises.push(bot.uid);
+    const correct = rep===q.correct;
+    const temps = (Date.now()-ETAT_APP.debutQuestion)/1000;
+    const bonus = Math.floor(Math.max(0,1-temps/ETAT_APP.limiteTempsQuestion)*50);
+    const points = correct ? 100 + bonus + (ETAT_APP.reponsesSoumises.length<=2?25:0) : -25;
+    ETAT_APP.scoresMatch[bot.uid] = (ETAT_APP.scoresMatch[bot.uid]||0)+points;
+    bot.score = ETAT_APP.scoresMatch[bot.uid];
+    mettreAJourScoresLive();
+  }
+
+  function passerQuestionSuivante() {
+    if(ETAT_APP._timerInterval) clearInterval(ETAT_APP._timerInterval);
+    const next = ETAT_APP.indexQuestionActuelle+1;
+    next>=10 ? terminerMatch() : lancerQuestion(next);
+  }
+
+  function envoyerChatEmoji(emoji) {
+    ETAT_APP.messagesChat.push({ auteur: donneesUtilisateur.username, contenu: emoji });
+    mettreAJourChatAffichage();
+  }
+
+  function mettreAJourChatAffichage() {
+    const cont = document.getElementById('match-chat-msgs');
+    if(!cont) return;
+    cont.innerHTML = ETAT_APP.messagesChat.slice(-6).map(m => `<div class="chat-msg"><span class="chat-msg-auteur">${m.auteur}</span> ${m.contenu}</div>`).join('');
+    cont.scrollTop = cont.scrollHeight;
+  }
+
+  function mettreAJourScoresLive() {
+    const cont = document.getElementById('match-scores-live');
+    if(!cont) return;
+    const tries = [...ETAT_APP.donneesMatch.joueurs].sort((a,b)=>(ETAT_APP.scoresMatch[b.uid]||0)-(ETAT_APP.scoresMatch[a.uid]||0));
+    cont.innerHTML = tries.map((p,i) => `
+      <div class="score-live-puce ${p.uid===utilisateurActuel.uid?'moi':''}">
+        ${i===0?'👑':''} ${p.avatar} ${p.username}: ${ETAT_APP.scoresMatch[p.uid]||0}
+      </div>`).join('');
+  }
+
+  function terminerMatch() {
+    ETAT_APP.matchTermine = true;
+    if(ETAT_APP._timerInterval) clearInterval(ETAT_APP._timerInterval);
+    const uid = utilisateurActuel.uid;
+    const tries = [...ETAT_APP.donneesMatch.joueurs].sort((a,b)=>(ETAT_APP.scoresMatch[b.uid]||0)-(ETAT_APP.scoresMatch[a.uid]||0));
+    const rang = tries.findIndex(p=>p.uid===uid)+1;
+    const score = ETAT_APP.scoresMatch[uid]||0;
+    const xp = Math.max(0,score);
+    const changement = rang<=2 ? Math.floor(Math.random()*15)+5 : rang>=tries.length-1 ? -(Math.floor(Math.random()*10)+3) : Math.floor(Math.random()*8)-3;
+    if(donneesUtilisateur) {
+      donneesUtilisateur.stats.scoreTotal += xp;
+      donneesUtilisateur.stats.totalMatchs = (donneesUtilisateur.stats.totalMatchs||0)+1;
+      if(rang===1) donneesUtilisateur.stats.victoires = (donneesUtilisateur.stats.victoires||0)+1;
+      donneesUtilisateur.stats.rang = Math.max(1, (donneesUtilisateur.stats.rang||500) - changement);
+      if(donneesUtilisateur.stats.totalMatchs>0) donneesUtilisateur.stats.precision = Math.floor((donneesUtilisateur.stats.victoires/donneesUtilisateur.stats.totalMatchs)*100);
+      setInCache(CACHE_KEYS.USER_DATA, donneesUtilisateur);
+      if(db) db.collection('utilisateurs').doc(uid).update({ stats: donneesUtilisateur.stats }).catch(()=>{});
+    }
+    document.getElementById('contenu-resultats').innerHTML = `
+      <div class="rang-resultat">#${rang}</div>
+      <div>${rang===1?'🏆 VICTOIRE !':rang<=2?'🥈 Excellent !':rang<=3?'🥉 Bon effort !':'Continuez !'}</div>
+      <div class="xp-gagne">+${xp} XP</div>
+      <div class="changement-rang ${changement>=0?'hausse':'baisse'}">${changement>=0?'📈 Rang +'+changement:'📉 Rang '+changement}</div>`;
+    afficherEcran('ecran-resultats');
+    mettreAJourTouteInterface();
+  }
+
+  function relancerMatchmaking() {
+    if(ETAT_APP.categorieChoisie) { afficherEcran('ecran-matchmaking'); lancerMatchmaking(ETAT_APP.categorieChoisie); }
+  }
+
+  // ═══ CLASSEMENT (Firestore + cache) ═══
+  async function renderClassement() {
+    const cont = document.getElementById('contenu-classement');
+    cont.innerHTML = '<div class="chargement-classement">⏳ Chargement...</div>';
+    try {
+      let classement = getFromCache(CACHE_KEYS.LEADERBOARD);
+      if(!classement && db) {
+        const snap = await db.collection('utilisateurs').orderBy('stats.scoreTotal','desc').limit(100).get();
+        classement = snap.docs.map((doc,idx) => ({
+          rank: idx+1,
+          nom: doc.data().username,
+          avatar: doc.data().avatarUrl || doc.data().avatar || '👤',
+          score: doc.data().stats?.scoreTotal||0,
+          matchs: doc.data().stats?.totalMatchs||0,
+          precision: doc.data().stats?.precision||0,
+        }));
+        setInCache(CACHE_KEYS.LEADERBOARD, classement);
+      }
+      if(!classement) classement = [];
+      cont.innerHTML = classement.map((e,i) => `
+        <div class="ligne-classement ${i<3?'top'+(i+1):''}">
+          <div class="rang-numero">${i===0?'👑':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div>
+          <div class="avatar-lb" ${e.avatar.startsWith('http')?`style="background-image:url('${e.avatar}')"`:''}>${!e.avatar.startsWith('http')?e.avatar:''}</div>
+          <div class="info-lb"><div class="nom-lb">${e.nom}</div><div class="stats-lb">${e.matchs} matchs • ${e.precision}% préc.</div></div>
+          <div class="score-lb">${e.score.toLocaleString()}</div>
+        </div>`).join('');
+    } catch(e) { cont.innerHTML = '<div class="chargement-classement">Erreur chargement</div>'; }
+  }
+
+  function renderMiniClassement() {
+    renderClassement();
+  }
+
+  // ═══ PROFIL ═══
+  function renderProfil() {
+    if(!donneesUtilisateur) return;
+    const el = document.getElementById('profil-avatar');
+    if(donneesUtilisateur.avatarUrl) {
+      el.style.backgroundImage = `url('${donneesUtilisateur.avatarUrl}')`;
+      el.textContent = '';
+    } else {
+      el.style.backgroundImage = 'none';
+      el.textContent = donneesUtilisateur.avatar||'👤';
+    }
+    document.getElementById('profil-pseudo').textContent = donneesUtilisateur.username;
+    document.getElementById('profil-code-ref').textContent = 'Code : '+donneesUtilisateur.codeParrainage;
+    document.getElementById('prof-victoires').textContent = donneesUtilisateur.stats.victoires;
+    document.getElementById('prof-score').textContent = donneesUtilisateur.stats.scoreTotal.toLocaleString();
+    document.getElementById('prof-precision').textContent = donneesUtilisateur.stats.precision+'%';
+    document.getElementById('prof-rang').textContent = '#'+donneesUtilisateur.stats.rang;
+    let badges = '';
+    if(donneesUtilisateur.nombreParrainages>=50) badges += '<span class="badge-puce badge-legende">👑 Légende</span>';
+    if(donneesUtilisateur.nombreParrainages>=20) badges += '<span class="badge-puce badge-croissance">🥇 Maître</span>';
+    if(donneesUtilisateur.nombreParrainages>=5) badges += '<span class="badge-puce badge-recruteur">🔥 Recruteur</span>';
+    document.getElementById('profil-badges').innerHTML = badges || '<span style="color:var(--text-muted);">Aucun badge</span>';
+  }
+
+  // ═══ PARRAINAGE ═══
+  function renderEcranParrainage() {
+    if(!donneesUtilisateur) return;
+    document.getElementById('ref-code-box').textContent = donneesUtilisateur.codeParrainage;
+    document.getElementById('ref-lien-input').value = window.location.origin+window.location.pathname+'?ref='+donneesUtilisateur.codeParrainage;
+    document.getElementById('ref-stats').textContent = `Invitations : ${donneesUtilisateur.nombreParrainages||0} | Points : ${donneesUtilisateur.pointsParrainage||0}`;
+  }
+  function copierLienParrainage() {
+    const input = document.getElementById('ref-lien-input');
+    navigator.clipboard.writeText(input.value).then(()=>afficherToast('📋 Lien copié !','succes'));
+  }
+  function partagerWhatsApp() {
+    const aujourdhui = new Date().toDateString();
+    if(ETAT_APP.derniereDatePartage===aujourdhui && ETAT_APP.partagesWhatsAppQuotidiens>=5) return afficherToast('⚠️ Limite 5/jour','info');
+    if(ETAT_APP.derniereDatePartage!==aujourdhui) { ETAT_APP.partagesWhatsAppQuotidiens=0; ETAT_APP.derniereDatePartage=aujourdhui; }
+    const lien = window.location.origin+window.location.pathname+'?ref='+donneesUtilisateur.codeParrainage;
+    window.open(`https://wa.me/?text=${encodeURIComponent(`🔥 Rejoins-moi sur AYITOPIA ! 🇭🇹\n${lien}`)}`);
+    ETAT_APP.partagesWhatsAppQuotidiens++;
+    if(donneesUtilisateur && ETAT_APP.partagesWhatsAppQuotidiens<=5) {
+      donneesUtilisateur.stats.scoreTotal += 1;
+      donneesUtilisateur.pointsParrainage += 1;
+      setInCache(CACHE_KEYS.USER_DATA, donneesUtilisateur);
+      if(db) db.collection('utilisateurs').doc(utilisateurActuel.uid).update({ 'stats.scoreTotal': firebase.firestore.FieldValue.increment(1), pointsParrainage: firebase.firestore.FieldValue.increment(1) }).catch(()=>{});
+    }
+    afficherToast('📲 Partagé ! +1 point','succes');
+    mettreAJourTouteInterface();
+  }
+
+  // ═══ RÉCOMPENSES ═══
+  function renderRecompenses() {
+    document.getElementById('liste-recompenses').innerHTML = [
+      { icone:'📱', nom:'Recharge Natcom 500 Mo', desc:'Top 10 hebdo' },
+      { icone:'📶', nom:'Recharge Digicel 1 Go', desc:'Top 3 hebdo' },
+      { icone:'🏆', nom:'Recharge Digicel 3 Go', desc:'#1 hebdo' },
+    ].map(r => `<div class="recompense-card"><div class="recompense-icone">${r.icone}</div><div class="recompense-info"><div class="recompense-nom">${r.nom}</div><div class="recompense-desc">${r.desc}</div></div><div class="recompense-statut verrou">🔒</div></div>`).join('');
+  }
+  function renderMiniRecompenses() {
+    document.getElementById('lobby-recompenses-liste').innerHTML = `<div class="recompense-card"><div class="recompense-icone">🏆</div><div class="recompense-info"><div class="recompense-nom">#1 Hebdo</div></div></div>`;
+  }
+
+  // ═══ UI ═══
+  function mettreAJourTouteInterface() {
+    document.getElementById('affichage-score-utilisateur').textContent = donneesUtilisateur?.stats?.scoreTotal?.toLocaleString()||'0';
+    document.getElementById('affichage-rang-utilisateur').textContent = '#'+(donneesUtilisateur?.stats?.rang||'--');
+    document.getElementById('global-en-ligne').textContent = Math.floor(Math.random()*60)+35;
+  }
+
+  function afficherToast(msg, type='info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = msg;
+    document.getElementById('toast-conteneur').appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+  }
+
+  function deconnexion() { auth.signOut(); }
+
+  // ═══ DÉMARRAGE ═══
+  document.addEventListener('DOMContentLoaded', () => {
+    if(initialiserFirebase()) {
+      configurerAuth();
+    } else {
+      document.getElementById('ecran-chargement').innerHTML = '<div style="color:red;">Erreur Firebase</div>';
+    }
+
+    // Upload avatar via ImgBB
+    document.getElementById('profil-avatar').addEventListener('click', () => document.getElementById('avatar-upload-input').click());
+    document.getElementById('avatar-upload-input').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      if(!file || !utilisateurActuel) return;
+      if(!file.type.startsWith('image/')) return afficherToast('⚠️ Image uniquement', 'info');
+      try {
+        afficherToast('📸 Upload...', 'info');
+        const url = await uploaderAvatarImgBB(file);
+        await db.collection('utilisateurs').doc(utilisateurActuel.uid).update({ avatarUrl: url, avatar: '🖼️' });
+        donneesUtilisateur.avatarUrl = url;
+        donneesUtilisateur.avatar = '🖼️';
+        setInCache(CACHE_KEYS.USER_DATA, donneesUtilisateur);
+        document.getElementById('profil-avatar').style.backgroundImage = `url('${url}')`;
+        document.getElementById('profil-avatar').textContent = '';
+        afficherToast('✅ Avatar mis à jour !', 'succes');
+      } catch(err) { afficherToast('❌ '+err.message, 'erreur'); }
+      e.target.value = '';
+    });
+
+    // Onglets lobby
+    document.getElementById('lobby-nav-onglets').addEventListener('click', e => {
+      const onglet = e.target.closest('.nav-onglet');
+      if(!onglet) return;
+      document.querySelectorAll('#lobby-nav-onglets .nav-onglet').forEach(t=>t.classList.remove('actif'));
+      onglet.classList.add('actif');
+      ETAT_APP.ongletLobby = onglet.dataset.onglet;
+      if(onglet.dataset.onglet==='classement') afficherEcran('ecran-classement');
+      else if(onglet.dataset.onglet==='parrainage') afficherEcran('ecran-parrainage');
+      else if(onglet.dataset.onglet==='recompenses') afficherEcran('ecran-recompenses');
+      else renderContenuOngletLobby();
+    });
+
+    document.getElementById('classement-onglets').addEventListener('click', e => {
+      const onglet = e.target.closest('.nav-onglet');
+      if(!onglet) return;
+      document.querySelectorAll('#classement-onglets .nav-onglet').forEach(t=>t.classList.remove('actif'));
+      onglet.classList.add('actif');
+      ETAT_APP.ongletClassement = onglet.dataset.classement;
+      renderClassement();
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('ref')) ETAT_APP.parrainageEnAttente = params.get('ref');
+  });
 </script>
 </body>
 </html>
