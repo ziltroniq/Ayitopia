@@ -1,0 +1,2365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AYITOPIA - Haitian Competitive Quiz Arena</title>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js">
+    </script>
+
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #111118;
+            --bg-card: #16161f;
+            --bg-card-hover: #1c1c28;
+            --neon-blue: #00d4ff;
+            --neon-blue-dim: #0088aa;
+            --neon-red: #ff3355;
+            --neon-gold: #ffb800;
+            --neon-green: #00e676;
+            --neon-purple: #b44dff;
+            --text-primary: #e8e8f0;
+            --text-secondary: #a0a0b8;
+            --text-muted: #6a6a80;
+            --border-subtle: #1e1e2c;
+            --border-glow: rgba(0, 212, 255, 0.25);
+            --shadow-glow: 0 0 30px rgba(0, 212, 255, 0.15);
+            --shadow-gold: 0 0 30px rgba(255, 184, 0, 0.2);
+            --radius-sm: 8px;
+            --radius-md: 14px;
+            --radius-lg: 20px;
+            --radius-xl: 28px;
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+            --transition-fast: 0.15s ease;
+            --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: var(--font-main);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* ── SCREEN CONTAINER ── */
+        #app-root {
+            width: 100%;
+            height: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: var(--bg-primary);
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
+        }
+
+        @media (min-width: 768px) {
+            #app-root {
+                border-left: 1px solid var(--border-subtle);
+                border-right: 1px solid var(--border-subtle);
+                border-radius: var(--radius-xl);
+                margin-top: 10px;
+                height: calc(100% - 20px);
+            }
+        }
+
+        /* ── SCREENS ── */
+        .screen {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 16px;
+            transition: transform var(--transition-smooth), opacity var(--transition-smooth);
+            will-change: transform, opacity;
+        }
+        .screen.hidden {
+            transform: translateX(40px);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .screen.active {
+            transform: translateX(0);
+            opacity: 1;
+            pointer-events: auto;
+            z-index: 10;
+        }
+        .screen.hidden-left {
+            transform: translateX(-40px);
+            opacity: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── LOADING SCREEN ── */
+        #loading-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 24px;
+            z-index: 100;
+        }
+        #loading-screen .logo-pulse {
+            font-size: 48px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: pulse-glow 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse-glow {
+            0%,
+            100% {
+                filter: brightness(1);
+            }
+            50% {
+                filter: brightness(1.5);
+            }
+        }
+        #loading-screen .loader-bar {
+            width: 120px;
+            height: 4px;
+            background: var(--border-subtle);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        #loading-screen .loader-bar-fill {
+            height: 100%;
+            background: var(--neon-blue);
+            border-radius: 4px;
+            animation: load-slide 1.2s ease-in-out infinite;
+        }
+        @keyframes load-slide {
+            0% {
+                width: 0;
+                margin-left: 0;
+            }
+            50% {
+                width: 60%;
+                margin-left: 20%;
+            }
+            100% {
+                width: 0;
+                margin-left: 100%;
+            }
+        }
+
+        /* ── TUTORIAL OVERLAY ── */
+        #tutorial-overlay {
+            position: absolute;
+            inset: 0;
+            z-index: 200;
+            background: rgba(0, 0, 0, 0.92);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            transition: opacity var(--transition-smooth);
+        }
+        #tutorial-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .tutorial-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glow);
+            border-radius: var(--radius-lg);
+            padding: 28px 22px;
+            max-width: 380px;
+            width: 100%;
+            text-align: center;
+            box-shadow: var(--shadow-glow);
+            animation: card-pop 0.4s ease;
+        }
+        @keyframes card-pop {
+            0% {
+                transform: scale(0.85);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        .tutorial-icon {
+            font-size: 64px;
+            margin-bottom: 12px;
+            animation: bounce-icon 0.6s ease;
+        }
+        @keyframes bounce-icon {
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-18px);
+            }
+            50% {
+                transform: translateY(0);
+            }
+            70% {
+                transform: translateY(-8px);
+            }
+        }
+        .tutorial-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--neon-blue);
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+        .tutorial-body {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .tutorial-dots {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+        .tutorial-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border-subtle);
+            transition: all var(--transition-fast);
+        }
+        .tutorial-dot.active {
+            background: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue);
+            width: 28px;
+            border-radius: 10px;
+        }
+        .tutorial-dot.done {
+            background: var(--neon-green);
+        }
+        .tutorial-btns {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* ── BUTTONS ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px 24px;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            transition: all var(--transition-fast);
+            letter-spacing: 0.3px;
+            position: relative;
+            overflow: hidden;
+            font-family: var(--font-main);
+        }
+        .btn:active {
+            transform: scale(0.95);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--neon-blue), #0099cc);
+            color: #000;
+            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.35);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 6px 28px rgba(0, 212, 255, 0.5);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background: transparent;
+            color: var(--neon-blue);
+            border: 2px solid var(--neon-blue);
+        }
+        .btn-secondary:hover {
+            background: rgba(0, 212, 255, 0.08);
+        }
+        .btn-ghost {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border-subtle);
+        }
+        .btn-ghost:hover {
+            border-color: var(--text-muted);
+            color: var(--text-primary);
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, var(--neon-red), #cc1030);
+            color: #fff;
+            box-shadow: 0 4px 20px rgba(255, 51, 85, 0.3);
+        }
+        .btn-gold {
+            background: linear-gradient(135deg, var(--neon-gold), #e69900);
+            color: #000;
+            box-shadow: 0 4px 20px rgba(255, 184, 0, 0.35);
+            font-weight: 800;
+        }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+            border-radius: var(--radius-sm);
+        }
+        .btn-lg {
+            padding: 15px 32px;
+            font-size: 16px;
+            border-radius: var(--radius-lg);
+        }
+        .btn-block {
+            width: 100%;
+            justify-content: center;
+        }
+        .btn:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        /* ── LOBBY ── */
+        .lobby-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            gap: 10px;
+        }
+        .lobby-logo {
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .lobby-stats-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .stat-pill {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .stat-pill .live-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--neon-green);
+            animation: live-pulse 1.5s infinite;
+        }
+        @keyframes live-pulse {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(0, 230, 118, 0);
+            }
+        }
+        .category-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+        .category-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 16px 12px;
+            cursor: pointer;
+            transition: all var(--transition-smooth);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .category-card:hover {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        .category-card:active {
+            transform: scale(0.96);
+        }
+        .category-card .cat-icon {
+            font-size: 36px;
+            margin-bottom: 6px;
+        }
+        .category-card .cat-name {
+            font-weight: 700;
+            font-size: 13px;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+        .category-card .cat-players {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+        .category-card .cat-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--neon-red);
+            color: #fff;
+            font-size: 9px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+        .nav-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+        .nav-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+        }
+        .nav-tab.active {
+            background: var(--neon-blue);
+            color: #000;
+            border-color: var(--neon-blue);
+            font-weight: 700;
+        }
+
+        /* ── MATCH SCREEN ── */
+        .match-timer-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--border-subtle);
+            border-radius: 6px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+        .match-timer-fill {
+            height: 100%;
+            background: var(--neon-blue);
+            border-radius: 6px;
+            transition: width 0.1s linear;
+        }
+        .match-timer-fill.urgent {
+            background: var(--neon-red);
+            animation: urgent-flash 0.5s infinite;
+        }
+        @keyframes urgent-flash {
+            50% {
+                opacity: 0.5;
+            }
+        }
+        .match-question-num {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .match-question {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+            line-height: 1.4;
+            text-align: center;
+        }
+        .match-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .match-option {
+            background: var(--bg-card);
+            border: 2px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            text-align: center;
+            transition: all var(--transition-fast);
+            color: var(--text-primary);
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-break: break-word;
+        }
+        .match-option:hover {
+            border-color: var(--neon-blue);
+            background: var(--bg-card-hover);
+        }
+        .match-option.selected {
+            border-color: var(--neon-blue);
+            background: rgba(0, 212, 255, 0.12);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
+        }
+        .match-option.correct {
+            border-color: var(--neon-green) !important;
+            background: rgba(0, 230, 118, 0.15) !important;
+            animation: correct-flash 0.5s ease;
+        }
+        .match-option.wrong {
+            border-color: var(--neon-red) !important;
+            background: rgba(255, 51, 85, 0.15) !important;
+            animation: shake 0.4s ease;
+        }
+        @keyframes correct-flash {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.04);
+            }
+        }
+        @keyframes shake {
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+            25% {
+                transform: translateX(-6px);
+            }
+            75% {
+                transform: translateX(6px);
+            }
+        }
+        .match-live-scores {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+            justify-content: center;
+        }
+        .live-score-chip {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 6px 12px;
+            font-size: 11px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            border: 1px solid var(--border-subtle);
+        }
+        .live-score-chip.me {
+            border-color: var(--neon-gold);
+            box-shadow: 0 0 8px rgba(255, 184, 0, 0.2);
+        }
+        .live-score-chip .crown {
+            color: var(--neon-gold);
+        }
+
+        /* ── RESULTS ── */
+        .results-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border-subtle);
+            margin-bottom: 12px;
+        }
+        .results-rank {
+            font-size: 56px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--neon-gold), #ffaa00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .results-xp {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--neon-green);
+            margin: 8px 0;
+        }
+        .results-rank-change {
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .results-rank-change.up {
+            color: var(--neon-green);
+        }
+        .results-rank-change.down {
+            color: var(--neon-red);
+        }
+
+        /* ── LEADERBOARD ── */
+        .lb-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            margin-bottom: 6px;
+            border: 1px solid var(--border-subtle);
+            transition: all var(--transition-fast);
+        }
+        .lb-row.top-1 {
+            border-color: var(--neon-gold);
+            box-shadow: 0 0 12px rgba(255, 184, 0, 0.2);
+            background: linear-gradient(135deg, #1a1a10, var(--bg-card));
+        }
+        .lb-row.top-2 {
+            border-color: #c0c0c0;
+            box-shadow: 0 0 8px rgba(192, 192, 192, 0.15);
+        }
+        .lb-row.top-3 {
+            border-color: #cd7f32;
+            box-shadow: 0 0 8px rgba(205, 127, 50, 0.15);
+        }
+        .lb-rank-num {
+            font-weight: 900;
+            font-size: 18px;
+            min-width: 30px;
+            text-align: center;
+        }
+        .lb-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .lb-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .lb-name {
+            font-weight: 700;
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .lb-stats {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+        .lb-score {
+            font-weight: 800;
+            font-size: 14px;
+            color: var(--neon-gold);
+        }
+
+        /* ── PROFILE ── */
+        .profile-avatar-large {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--border-subtle);
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            border: 3px solid var(--neon-blue);
+            box-shadow: 0 0 25px rgba(0, 212, 255, 0.2);
+        }
+        .profile-stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin: 12px 0;
+        }
+        .profile-stat-box {
+            background: var(--bg-card);
+            border-radius: var(--radius-sm);
+            padding: 14px;
+            text-align: center;
+            border: 1px solid var(--border-subtle);
+        }
+        .profile-stat-val {
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--neon-blue);
+        }
+        .profile-stat-label {
+            font-size: 10px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .badge-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .badge-chip {
+            padding: 6px 12px;
+            border-radius: 16px;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .badge-recruiter {
+            background: #ff6b2b22;
+            color: #ff6b2b;
+            border: 1px solid #ff6b2b44;
+        }
+        .badge-growth {
+            background: #c0c0c022;
+            color: #c0c0c0;
+            border: 1px solid #c0c0c044;
+        }
+        .badge-legend {
+            background: #ffb80022;
+            color: var(--neon-gold);
+            border: 1px solid #ffb80044;
+        }
+
+        /* ── REFERRAL ── */
+        .ref-code-box {
+            background: var(--bg-card);
+            border: 2px dashed var(--neon-blue);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: var(--neon-blue);
+            margin: 10px 0;
+            word-break: break-all;
+        }
+        .ref-link-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin: 8px 0;
+        }
+        .ref-link-input {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-sm);
+            padding: 10px 12px;
+            color: var(--text-primary);
+            font-size: 11px;
+            font-family: var(--font-mono);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* ── REWARDS ── */
+        .reward-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .reward-icon {
+            font-size: 40px;
+        }
+        .reward-info {
+            flex: 1;
+        }
+        .reward-name {
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .reward-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .reward-status {
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+        .reward-status.available {
+            background: #00e67622;
+            color: var(--neon-green);
+        }
+        .reward-status.locked {
+            background: #ff335522;
+            color: var(--neon-red);
+        }
+
+        /* ── MATCHMAKING ── */
+        .matchmaking-anim {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            padding: 40px 20px;
+        }
+        .mm-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--border-subtle);
+            border-top-color: var(--neon-blue);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .mm-text {
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+        .mm-count {
+            font-size: 36px;
+            font-weight: 900;
+            color: var(--neon-blue);
+        }
+
+        /* ── TOAST ── */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+            max-width: 90vw;
+        }
+        .toast {
+            padding: 12px 20px;
+            border-radius: var(--radius-md);
+            font-weight: 700;
+            font-size: 13px;
+            animation: toast-in 0.3s ease, toast-out 0.3s ease 2.5s forwards;
+            text-align: center;
+            pointer-events: auto;
+        }
+        .toast-success {
+            background: #00e676;
+            color: #000;
+        }
+        .toast-error {
+            background: var(--neon-red);
+            color: #fff;
+        }
+        .toast-info {
+            background: var(--neon-blue);
+            color: #000;
+        }
+        @keyframes toast-in {
+            from {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        @keyframes toast-out {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+        }
+
+        /* ── SCROLLBAR ── */
+        .screen::-webkit-scrollbar {
+            width: 3px;
+        }
+        .screen::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .screen::-webkit-scrollbar-thumb {
+            background: var(--border-subtle);
+            border-radius: 3px;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 380px) {
+            .category-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+            }
+            .category-card {
+                padding: 10px 6px;
+            }
+            .category-card .cat-icon {
+                font-size: 26px;
+            }
+            .match-options {
+                grid-template-columns: 1fr;
+            }
+            .btn {
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+            .lobby-logo {
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-root">
+        <!-- LOADING SCREEN -->
+        <div id="loading-screen" class="screen active">
+            <div class="logo-pulse">AYITOPIA</div>
+            <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+            <div style="color:var(--text-muted);font-size:12px;">Loading your arena...</div>
+        </div>
+
+        <!-- TUTORIAL OVERLAY -->
+        <div id="tutorial-overlay" class="hidden"></div>
+
+        <!-- LOBBY SCREEN -->
+        <div id="lobby-screen" class="screen hidden">
+            <div class="lobby-header">
+                <div class="lobby-logo">⚔️ AYITOPIA</div>
+                <button class="btn btn-ghost btn-sm" onclick="showScreen('profile-screen')">👤 Profile</button>
+            </div>
+            <div class="lobby-stats-row" id="lobby-stats-row">
+                <div class="stat-pill"><span class="live-dot"></span> <span id="global-online">0</span> online</div>
+                <div class="stat-pill">🏆 <span id="user-rank-display">--</span></div>
+                <div class="stat-pill">⭐ <span id="user-score-display">0</span> pts</div>
+            </div>
+            <div class="nav-tabs" id="lobby-nav-tabs">
+                <div class="nav-tab active" data-tab="play">🎮 Play</div>
+                <div class="nav-tab" data-tab="leaderboard">🏆 Rankings</div>
+                <div class="nav-tab" data-tab="referrals">👥 Referrals</div>
+                <div class="nav-tab" data-tab="rewards">🎁 Rewards</div>
+            </div>
+            <div id="lobby-tab-content"></div>
+        </div>
+
+        <!-- CATEGORY SELECT SCREEN -->
+        <div id="category-screen" class="screen hidden">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                <button class="btn btn-ghost btn-sm" onclick="showScreen('lobby-screen')">← Back</button>
+                <span style="font-weight:700;font-size:16px;">Select Category</span>
+            </div>
+            <div class="category-grid" id="category-grid"></div>
+        </div>
+
+        <!-- MATCHMAKING SCREEN -->
+        <div id="matchmaking-screen" class="screen hidden">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                <button class="btn btn-ghost btn-sm" id="mm-cancel-btn">← Cancel</button>
+                <span style="font-weight:700;font-size:16px;">Matchmaking</span>
+            </div>
+            <div class="matchmaking-anim">
+                <div class="mm-spinner"></div>
+                <div class="mm-text">Searching for opponents...</div>
+                <div class="mm-count" id="mm-queue-count">0</div>
+                <div style="color:var(--text-muted);font-size:12px;">players in queue</div>
+                <div style="color:var(--text-muted);font-size:11px;" id="mm-category-name"></div>
+            </div>
+        </div>
+
+        <!-- MATCH SCREEN -->
+        <div id="match-screen" class="screen hidden">
+            <div class="match-timer-bar"><div class="match-timer-fill" id="match-timer-fill"></div></div>
+            <div class="match-question-num" id="match-q-num">Question 1 / 10</div>
+            <div class="match-question" id="match-question"></div>
+            <div class="match-options" id="match-options"></div>
+            <div class="match-live-scores" id="match-live-scores"></div>
+        </div>
+
+        <!-- RESULTS SCREEN -->
+        <div id="results-screen" class="screen hidden">
+            <div class="results-card" id="results-content"></div>
+            <button class="btn btn-primary btn-block btn-lg" onclick="showScreen('lobby-screen')">🏠 Back to Lobby</button>
+            <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="restartMatchmaking()">🔄 Play Again</button>
+        </div>
+
+        <!-- LEADERBOARD SCREEN (embedded in lobby tab or standalone) -->
+        <div id="leaderboard-screen" class="screen hidden">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                <button class="btn btn-ghost btn-sm" onclick="showScreen('lobby-screen')">← Back</button>
+                <span style="font-weight:700;font-size:16px;">🏆 Leaderboard</span>
+            </div>
+            <div class="nav-tabs" id="lb-tabs">
+                <div class="nav-tab active" data-lb="global">🌍 Global</div>
+                <div class="nav-tab" data-lb="daily">📅 Daily</div>
+                <div class="nav-tab" data-lb="weekly">📊 Weekly</div>
+                <div class="nav-tab" data-lb="referral">👥 Top Inviters</div>
+            </div>
+            <div id="lb-content"></div>
+        </div>
+
+        <!-- PROFILE SCREEN -->
+        <div id="profile-screen" class="screen hidden">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                <button class="btn btn-ghost btn-sm" onclick="showScreen('lobby-screen')">← Back</button>
+                <span style="font-weight:700;font-size:16px;">👤 My Profile</span>
+            </div>
+            <div class="profile-avatar-large" id="profile-avatar">👤</div>
+            <div style="text-align:center;font-weight:800;font-size:18px;" id="profile-username">Player</div>
+            <div style="text-align:center;color:var(--text-muted);font-size:11px;" id="profile-refcode">Code: ---</div>
+            <div class="profile-stat-grid">
+                <div class="profile-stat-box"><div class="profile-stat-val" id="prof-wins">0</div><div class="profile-stat-label">Wins</div></div>
+                <div class="profile-stat-box"><div class="profile-stat-val" id="prof-score">0</div><div class="profile-stat-label">Total Score</div></div>
+                <div class="profile-stat-box"><div class="profile-stat-val" id="prof-accuracy">0%</div><div class="profile-stat-label">Accuracy</div></div>
+                <div class="profile-stat-box"><div class="profile-stat-val" id="prof-rank">--</div><div class="profile-stat-label">Global Rank</div></div>
+            </div>
+            <div style="font-weight:700;font-size:13px;margin-top:8px;">🏅 Badges</div>
+            <div class="badge-row" id="profile-badges"></div>
+            <button class="btn btn-danger btn-block btn-sm" style="margin-top:16px;" onclick="handleLogout()">🚪 Logout</button>
+        </div>
+
+        <!-- REFERRAL SCREEN -->
+        <div id="referral-screen" class="screen hidden">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                <button class="btn btn-ghost btn-sm" onclick="showScreen('lobby-screen')">← Back</button>
+                <span style="font-weight:700;font-size:16px;">👥 Referrals</span>
+            </div>
+            <div style="text-align:center;font-weight:700;color:var(--neon-gold);margin-bottom:6px;">Invite friends & earn points!</div>
+            <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:10px;">+10 pts per referral • +1 pt per WhatsApp share (max 5/day)</div>
+            <div class="ref-code-box" id="ref-code-box">----</div>
+            <div class="ref-link-row">
+                <input class="ref-link-input" id="ref-link-input" readonly value="" />
+                <button class="btn btn-primary btn-sm" onclick="copyRefLink()">📋 Copy</button>
+            </div>
+            <button class="btn btn-gold btn-block" style="margin-top:8px;" onclick="shareWhatsApp()">📲 Share on WhatsApp</button>
+            <div style="margin-top:12px;font-weight:700;font-size:13px;">📊 Your Referral Stats</div>
+            <div style="color:var(--text-secondary);font-size:13px;" id="ref-stats">Total invites: 0 | Points earned: 0</div>
+        </div>
+
+        <!-- REWARDS SCREEN -->
+        <div id="rewards-screen" class="screen hidden">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
+                <button class="btn btn-ghost btn-sm" onclick="showScreen('lobby-screen')">← Back</button>
+                <span style="font-weight:700;font-size:16px;">🎁 Rewards</span>
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Weekly top performers qualify for real rewards</div>
+            <div id="rewards-list"></div>
+            <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:10px;">⚠️ Only top leaderboard players qualify. Limited rewards to prevent abuse.</div>
+        </div>
+    </div>
+
+    <!-- TOAST CONTAINER -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+  // ═══════════════════════════════════════════════════════════════
+        //  AYITOPIA - Complete Multiplayer Quiz Platform
+        //  FIREBASE CONFIGURATION - REPLACE WITH YOUR OWN CREDENTIALS
+        // ═══════════════════════════════════════════════════════════════
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyD-PLACEHOLDER-KEY-REPLACE-ME",
+            authDomain: "ayitopia-app.firebaseapp.com",
+            projectId: "ayitopia-app",
+            storageBucket: "ayitopia-app.appspot.com",
+            messagingSenderId: "000000000000",
+            appId: "1:000000000000:web:xxxxxxxxxxxxxxxxxxxx"
+        };
+
+        // Demo mode flag - set to true for offline UI testing without Firebase
+        const DEMO_MODE = true;
+        let firebaseReady = false;
+        let auth = null;
+        let db = null;
+        let currentUser = null;
+        let currentUserData = null;
+
+        // ═══════════════════════════════════════════════════════════════
+        //  APP STATE
+        // ═══════════════════════════════════════════════════════════════
+        const APP_STATE = {
+            currentScreen: 'loading-screen',
+            previousScreen: null,
+            tutorialStep: 0,
+            totalTutorialSteps: 8,
+            tutorialSeen: false,
+            selectedCategory: null,
+            selectedCategoryName: null,
+            matchId: null,
+            matchData: null,
+            matchPlayerIndex: -1,
+            currentQuestionIndex: 0,
+            questionStartTime: 0,
+            questionTimeLimit: 20,
+            answersSubmitted: [],
+            matchScores: {},
+            matchFinished: false,
+            queueUnsubscribe: null,
+            matchUnsubscribe: null,
+            lobbyTab: 'play',
+            leaderboardTab: 'global',
+            pendingReferral: null,
+            dailyWhatsAppShares: 0,
+            lastWhatsAppShareDate: null,
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        //  QUESTION BANK
+        // ═══════════════════════════════════════════════════════════════
+        const QUESTION_BANK = {
+            'english-creole': [
+                { q: 'Translate: "Good morning" to Haitian Creole', opts: ['Bonjou', 'Bonswa', 'Bon apremidi',
+                        'Bon vwayaj'
+                    ], correct: 0, difficulty: 1 },
+                { q: 'Translate: "How are you?" to Haitian Creole', opts: ['Kijan ou ye?', 'Kisa ou vle?', 'Kote ou ale?',
+                        'Kilè ou vini?'
+                    ], correct: 0, difficulty: 1 },
+                { q: 'Translate: "I need help" to Haitian Creole', opts: ['Mwen bezwen èd', 'Mwen vle manje',
+                        'Mwen renmen ou', 'Mwen fatige'
+                    ], correct: 0, difficulty: 2 },
+                { q: 'What does "dlo" mean in English?', opts: ['Water', 'Fire', 'Earth', 'Wind'], correct: 0,
+                    difficulty: 1 },
+                { q: 'Translate: "Thank you very much"', opts: ['Mèsi anpil', 'Bonjou zanmi', 'Orevwa tout moun',
+                        'Souple ede mwen'
+                    ], correct: 0, difficulty: 1 },
+                { q: 'What does "zanmi" mean?', opts: ['Friend', 'Enemy', 'Family', 'Teacher'], correct: 0,
+                difficulty: 1 },
+                { q: 'Translate: "Where is the hospital?"', opts: ['Kote lopital la?', 'Kijan lopital la ye?',
+                        'Kilè lopital la ouvè?', 'Poukisa lopital la fèmen?'
+                    ], correct: 0, difficulty: 2 },
+                { q: 'What does "manje" mean?', opts: ['Food / To eat', 'To sleep', 'To run', 'To drink'], correct: 0,
+                    difficulty: 1 },
+                { q: 'Translate: "I love Haiti"', opts: ['Mwen renmen Ayiti', 'Mwen rayi Ayiti', 'Mwen kite Ayiti',
+                        'Mwen bliye Ayiti'
+                    ], correct: 0, difficulty: 2 },
+                { q: 'What does "koulè" mean?', opts: ['Color', 'School', 'Flower', 'Money'], correct: 0,
+                difficulty: 2 },
+                { q: 'Translate: "See you tomorrow"', opts: ['Na wè demen', 'Na wè jodi a', 'Na wè yè', 'Na wè kounye a'],
+                    correct: 0, difficulty: 2 },
+                { q: 'What does "chante" mean?', opts: ['To sing', 'To dance', 'To write', 'To read'], correct: 0,
+                    difficulty: 1 },
+            ],
+            'math': [
+                { q: 'Solve: 15 × 8 = ?', opts: ['120', '110', '130', '115'], correct: 0, difficulty: 1 },
+                { q: 'What is the square root of 144?', opts: ['12', '14', '10', '16'], correct: 0, difficulty: 1 },
+                { q: 'Solve: 3x + 7 = 22, x = ?', opts: ['5', '6', '4', '7'], correct: 0, difficulty: 2 },
+                { q: 'What is 25% of 400?', opts: ['100', '80', '120', '90'], correct: 0, difficulty: 1 },
+                { q: 'If a triangle has angles 60° and 80°, what is the third angle?', opts: ['40°', '50°', '30°',
+                        '60°'
+                    ], correct: 0, difficulty: 2 },
+                { q: 'Solve: (8 + 4) × 3 - 10 = ?', opts: ['26', '22', '30', '18'], correct: 0, difficulty: 2 },
+                { q: 'What is the value of π (pi) to 2 decimal places?', opts: ['3.14', '3.16', '3.12', '3.18'],
+                    correct: 0, difficulty: 1 },
+                { q: 'Solve: 2⁵ = ?', opts: ['32', '64', '16', '128'], correct: 0, difficulty: 2 },
+                { q: 'What is the area of a circle with radius 7? (π=3.14)', opts: ['153.86', '140.00', '160.50',
+                        '145.00'
+                    ], correct: 0, difficulty: 3 },
+                { q: 'Simplify: 3(2x + 4) - 2x', opts: ['4x + 12', '6x + 12', '4x + 8', '8x + 12'], correct: 0,
+                    difficulty: 3 },
+            ],
+            'science': [
+                { q: 'What is the chemical symbol for water?', opts: ['H₂O', 'CO₂', 'NaCl', 'O₂'], correct: 0,
+                    difficulty: 1 },
+                { q: 'Which planet is known as the Red Planet?', opts: ['Mars', 'Venus', 'Jupiter', 'Saturn'],
+                    correct: 0, difficulty: 1 },
+                { q: 'What force keeps us on the ground?', opts: ['Gravity', 'Magnetism', 'Friction', 'Inertia'],
+                    correct: 0, difficulty: 1 },
+                { q: 'What is the speed of light in vacuum?', opts: ['300,000 km/s', '150,000 km/s', '500,000 km/s',
+                        '100,000 km/s'
+                    ], correct: 0, difficulty: 2 },
+                { q: 'Which gas do plants absorb from the atmosphere?', opts: ['Carbon dioxide', 'Oxygen', 'Nitrogen',
+                        'Hydrogen'
+                    ], correct: 0, difficulty: 1 },
+                { q: 'What is the boiling point of water in Celsius?', opts: ['100°C', '90°C', '110°C', '80°C'],
+                    correct: 0, difficulty: 1 },
+                { q: 'What type of energy does the sun produce?', opts: ['Nuclear fusion', 'Chemical', 'Electrical',
+                        'Mechanical'
+                    ], correct: 0, difficulty: 2 },
+                { q: 'Which element has the atomic number 1?', opts: ['Hydrogen', 'Helium', 'Lithium', 'Carbon'],
+                    correct: 0, difficulty: 2 },
+            ],
+            'biology': [
+                { q: 'What is the powerhouse of the cell?', opts: ['Mitochondria', 'Nucleus', 'Ribosome', 'Golgi body'],
+                    correct: 0, difficulty: 1 },
+                { q: 'How many chromosomes do humans have?', opts: ['46', '44', '48', '42'], correct: 0, difficulty: 1 },
+                { q: 'Which blood type is the universal donor?', opts: ['O negative', 'A positive', 'B negative',
+                        'AB positive'
+                    ], correct: 0, difficulty: 2 },
+                { q: 'What is the largest organ in the human body?', opts: ['Skin', 'Liver', 'Brain', 'Heart'],
+                    correct: 0, difficulty: 1 },
+                { q: 'What process do plants use to make food?', opts: ['Photosynthesis', 'Respiration', 'Digestion',
+                        'Fermentation'
+                    ], correct: 0, difficulty: 1 },
+                { q: 'Which vitamin is produced when skin is exposed to sunlight?', opts: ['Vitamin D', 'Vitamin C',
+                        'Vitamin A', 'Vitamin B12'
+                    ], correct: 0, difficulty: 2 },
+                { q: 'What is the function of red blood cells?', opts: ['Carry oxygen', 'Fight infection', 'Clot blood',
+                        'Produce hormones'
+                    ], correct: 0, difficulty: 2 },
+            ],
+            'chemistry': [
+                { q: 'What is the chemical symbol for gold?', opts: ['Au', 'Ag', 'Fe', 'Cu'], correct: 0, difficulty: 1 },
+                { q: 'What is the pH of pure water?', opts: ['7', '0', '14', '5'], correct: 0, difficulty: 1 },
+                { q: 'Which gas is most abundant in Earth\'s atmosphere?', opts: ['Nitrogen', 'Oxygen', 'Carbon dioxide',
+                        'Argon'
+                    ], correct: 0, difficulty: 2 },
+                { q: 'What is the chemical formula for table salt?', opts: ['NaCl', 'KCl', 'CaCl₂', 'MgCl₂'],
+                    correct: 0, difficulty: 1 },
+                { q: 'Which element is represented by the symbol "Fe"?', opts: ['Iron', 'Fluorine', 'Francium',
+                        'Fermium'], correct: 0, difficulty: 2 },
+                { q: 'What type of bond forms between sodium and chlorine?', opts: ['Ionic bond', 'Covalent bond',
+                        'Hydrogen bond', 'Metallic bond'
+                    ], correct: 0, difficulty: 3 },
+            ],
+            'social-studies': [
+                { q: 'What is the capital of Haiti?', opts: ['Port-au-Prince', 'Cap-Haïtien', 'Jacmel', 'Les Cayes'],
+                    correct: 0, difficulty: 1 },
+                { q: 'When did Haiti gain independence?', opts: ['1804', '1791', '1810', '1820'], correct: 0,
+                    difficulty: 2 },
+                { q: 'Who was the leader of the Haitian Revolution?', opts: ['Toussaint Louverture',
+                        'Jean-Jacques Dessalines', 'Henri Christophe', 'Alexandre Pétion'
+                    ], correct: 0, difficulty: 2 },
+                { q: 'What is the official language of Haiti?', opts: ['Haitian Creole and French', 'Only French',
+                        'Only Creole', 'Spanish and Creole'
+                    ], correct: 0, difficulty: 1 },
+                { q: 'Which country shares the island of Hispaniola with Haiti?', opts: ['Dominican Republic', 'Cuba',
+                        'Jamaica', 'Puerto Rico'
+                    ], correct: 0, difficulty: 1 },
+                { q: 'What is the name of the Haitian flag?', opts: ['Bicolore', 'Tricolore', 'Union Jack',
+                        'Stars and Stripes'
+                    ], correct: 0, difficulty: 2 },
+            ],
+            'grammar': [
+                { q: 'Which sentence is correct?', opts: ['She goes to school every day.',
+                        'She go to school every day.', 'She going to school every day.',
+                        'She gone to school every day.'
+                    ], correct: 0, difficulty: 1 },
+                { q: 'What is the past tense of "run"?', opts: ['Ran', 'Runned', 'Running', 'Runs'], correct: 0,
+                    difficulty: 1 },
+                { q: 'Identify the noun: "The beautiful flower bloomed."', opts: ['Flower', 'Beautiful', 'Bloomed',
+                        'The'], correct: 0, difficulty: 1 },
+                { q: 'Which is a proper noun?', opts: ['Port-au-Prince', 'city', 'building', 'river'], correct: 0,
+                    difficulty: 1 },
+                { q: 'Choose the correct form: "They ___ to the party."', opts: ['went', 'gone', 'goes', 'going'],
+                    correct: 0, difficulty: 2 },
+                { q: 'What punctuation ends an interrogative sentence?', opts: ['Question mark', 'Period',
+                        'Exclamation mark', 'Comma'
+                    ], correct: 0, difficulty: 1 },
+            ],
+            'general-knowledge': [
+                { q: 'Which is the largest ocean on Earth?', opts: ['Pacific Ocean', 'Atlantic Ocean', 'Indian Ocean',
+                        'Arctic Ocean'
+                    ], correct: 0, difficulty: 1 },
+                { q: 'How many continents are there?', opts: ['7', '5', '6', '8'], correct: 0, difficulty: 1 },
+                { q: 'What year did the COVID-19 pandemic begin?', opts: ['2019', '2018', '2020', '2021'], correct: 0,
+                    difficulty: 2 },
+                { q: 'Which sport is Messi famous for?', opts: ['Football/Soccer', 'Basketball', 'Tennis', 'Cricket'],
+                    correct: 0, difficulty: 1 },
+                { q: 'What is the currency of Haiti?', opts: ['Gourde', 'Dollar', 'Euro', 'Peso'], correct: 0,
+                    difficulty: 1 },
+                { q: 'Who painted the Mona Lisa?', opts: ['Leonardo da Vinci', 'Michelangelo', 'Picasso', 'Van Gogh'],
+                    correct: 0, difficulty: 1 },
+                { q: 'What does "www" stand for?', opts: ['World Wide Web', 'Web World Wide', 'Wide World Web',
+                        'Web Wide World'
+                    ], correct: 0, difficulty: 1 },
+                { q: 'Which country won the 2022 FIFA World Cup?', opts: ['Argentina', 'France', 'Brazil', 'Germany'],
+                    correct: 0, difficulty: 2 },
+            ],
+        };
+
+        const CATEGORY_META = {
+            'english-creole': { name: 'English → Creole', icon: '🗣️', emoji: '🇭🇹' },
+            'math': { name: 'Mathematics', icon: '🔢', emoji: '📐' },
+            'science': { name: 'Science', icon: '🔬', emoji: '⚡' },
+            'biology': { name: 'Biology', icon: '🧬', emoji: '🦠' },
+            'chemistry': { name: 'Chemistry', icon: '⚗️', emoji: '🧪' },
+            'social-studies': { name: 'Social Studies', icon: '📚', emoji: '🌍' },
+            'grammar': { name: 'Grammar', icon: '📝', emoji: '✍️' },
+            'general-knowledge': { name: 'General Knowledge', icon: '🌐', emoji: '🧠' },
+        };
+
+        // ═══════════════════════════════════════════════════════════════
+        //  INITIALIZATION
+        // ═══════════════════════════════════════════════════════════════
+        function initFirebase() {
+            if (typeof firebase === 'undefined') {
+                console.warn('Firebase SDK not loaded. Running in demo mode.');
+                return false;
+            }
+            try {
+                if (FIREBASE_CONFIG.apiKey.includes('PLACEHOLDER') && !DEMO_MODE) {
+                    console.warn('Firebase config not set. Using demo mode.');
+                    return false;
+                }
+                if (DEMO_MODE) return false;
+                firebase.initializeApp(FIREBASE_CONFIG);
+                auth = firebase.auth();
+                db = firebase.firestore();
+                if (db) db.settings({ merge: true });
+                firebaseReady = true;
+                return true;
+            } catch (e) {
+                console.error('Firebase init error:', e);
+                return false;
+            }
+        }
+
+        function generateDemoUser() {
+            const id = 'demo_' + Math.random().toString(36).substr(2, 9);
+            const names = ['QuizWarrior', 'BrainStorm', 'AyitiChamp', 'KreyolKing', 'MathMaster', 'ScienceGeek',
+                'BioHacker', 'ChemWiz', 'HistoryBuff', 'GrammarPro'
+            ];
+            const name = names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random() * 100);
+            return {
+                uid: id,
+                displayName: name,
+                email: name.toLowerCase() + '@demo.ayitopia.com',
+                photoURL: null,
+                isDemo: true,
+            };
+        }
+
+        function generateDemoUserData(user) {
+            return {
+                username: user.displayName || 'Player',
+                avatar: user.photoURL || null,
+                stats: {
+                    wins: Math.floor(Math.random() * 30),
+                    totalScore: Math.floor(Math.random() * 5000) + 200,
+                    accuracy: Math.floor(Math.random() * 30) + 55,
+                    rank: Math.floor(Math.random() * 500) + 1,
+                    totalMatches: Math.floor(Math.random() * 60) + 5,
+                },
+                referralCode: (user.displayName || 'USER').toUpperCase().replace(/\s/g, '') + Math.random().toString(36)
+                    .substr(2, 4).toUpperCase(),
+                referredBy: null,
+                referralCount: Math.floor(Math.random() * 15),
+                referralPoints: Math.floor(Math.random() * 150),
+                badges: [],
+                dailyWhatsAppShares: 0,
+                lastWhatsAppShareDate: null,
+                createdAt: new Date().toISOString(),
+            };
+        }
+
+        async function initApp() {
+            const fbReady = initFirebase();
+            if (fbReady && auth && db) {
+                // Real Firebase auth
+                auth.onAuthStateChanged(async (user) => {
+                    if (user) {
+                        currentUser = user;
+                        await loadUserData(user);
+                        finishInit();
+                    } else {
+                        // Anonymous sign-in for quick access
+                        try {
+                            const result = await auth.signInAnonymously();
+                            currentUser = result.user;
+                            await createNewUserData(currentUser);
+                            finishInit();
+                        } catch (e) {
+                            console.error('Auth error:', e);
+                            fallbackToDemo();
+                        }
+                    }
+                });
+            } else {
+                // Demo mode
+                currentUser = generateDemoUser();
+                currentUserData = generateDemoUserData(currentUser);
+                APP_STATE.tutorialSeen = localStorage.getItem('ayitopia_tutorial_seen') === 'true';
+                APP_STATE.dailyWhatsAppShares = parseInt(localStorage.getItem('ayitopia_daily_shares') || '0');
+                APP_STATE.lastWhatsAppShareDate = localStorage.getItem('ayitopia_share_date') || null;
+                checkReferralOnLoad();
+                finishInit();
+            }
+        }
+
+        async function loadUserData(user) {
+            if (!db) return;
+            try {
+                const doc = await db.collection('users').doc(user.uid).get();
+                if (doc.exists) {
+                    currentUserData = doc.data();
+                    APP_STATE.tutorialSeen = currentUserData.tutorialSeen || false;
+                } else {
+                    await createNewUserData(user);
+                }
+            } catch (e) {
+                console.error('Load user error:', e);
+                currentUserData = generateDemoUserData(user);
+            }
+        }
+
+        async function createNewUserData(user) {
+            const data = {
+                username: user.displayName || user.email?.split('@')[0] || 'Player_' + Math.random().toString(36).substr(
+                    2, 5),
+                avatar: user.photoURL || null,
+                stats: { wins: 0, totalScore: 0, accuracy: 0, rank: 9999, totalMatches: 0 },
+                referralCode: (user.displayName || user.uid).toUpperCase().replace(/[^A-Z0-9]/g, '').substr(0, 8) + Math
+                    .random().toString(36).substr(2, 3).toUpperCase(),
+                referredBy: APP_STATE.pendingReferral || null,
+                referralCount: 0,
+                referralPoints: 0,
+                badges: [],
+                dailyWhatsAppShares: 0,
+                lastWhatsAppShareDate: null,
+                tutorialSeen: false,
+                createdAt: new Date().toISOString(),
+            };
+            currentUserData = data;
+            APP_STATE.tutorialSeen = false;
+            if (db && !DEMO_MODE) {
+                try {
+                    await db.collection('users').doc(user.uid).set(data);
+                    if (data.referredBy) {
+                        await processReferralBonus(data.referredBy, user.uid);
+                    }
+                } catch (e) { console.error('Create user error:', e); }
+            }
+            if (data.referredBy && DEMO_MODE) {
+                showToast('🔗 Joined via referral! Both you and your inviter earn bonuses.', 'info');
+            }
+        }
+
+        async function processReferralBonus(referrerCode, newUserId) {
+            if (!db || DEMO_MODE) return;
+            try {
+                const snapshot = await db.collection('users').where('referralCode', '==', referrerCode).limit(1).get();
+                if (!snapshot.empty) {
+                    const refDoc = snapshot.docs[0];
+                    await db.collection('users').doc(refDoc.id).update({
+                        referralCount: firebase.firestore.FieldValue.increment(1),
+                        referralPoints: firebase.firestore.FieldValue.increment(10),
+                        'stats.totalScore': firebase.firestore.FieldValue.increment(10),
+                    });
+                    await db.collection('users').doc(newUserId).update({
+                        'stats.totalScore': firebase.firestore.FieldValue.increment(5),
+                    });
+                }
+            } catch (e) { console.error('Referral bonus error:', e); }
+        }
+
+        function fallbackToDemo() {
+            currentUser = generateDemoUser();
+            currentUserData = generateDemoUserData(currentUser);
+            APP_STATE.tutorialSeen = localStorage.getItem('ayitopia_tutorial_seen') === 'true';
+            checkReferralOnLoad();
+        }
+
+        function checkReferralOnLoad() {
+            const params = new URLSearchParams(window.location.search);
+            const ref = params.get('ref');
+            if (ref) {
+                APP_STATE.pendingReferral = ref;
+                localStorage.setItem('ayitopia_pending_ref', ref);
+            } else {
+                APP_STATE.pendingReferral = localStorage.getItem('ayitopia_pending_ref') || null;
+            }
+        }
+
+        function finishInit() {
+            document.getElementById('loading-screen').classList.remove('active');
+            document.getElementById('loading-screen').classList.add('hidden');
+            if (!APP_STATE.tutorialSeen) {
+                startTutorial();
+            } else {
+                showScreen('lobby-screen');
+            }
+            updateAllUI();
+            if (firebaseReady && db && !DEMO_MODE) {
+                startRealtimeListeners();
+            }
+            if (DEMO_MODE) {
+                simulateOnlinePlayers();
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  SCREEN NAVIGATION
+        // ═══════════════════════════════════════════════════════════════
+        function showScreen(screenId) {
+            const allScreens = document.querySelectorAll('.screen');
+            const currentActive = document.querySelector('.screen.active');
+            const target = document.getElementById(screenId);
+            if (!target || (currentActive === target)) return;
+
+            APP_STATE.previousScreen = APP_STATE.currentScreen;
+            APP_STATE.currentScreen = screenId;
+
+            allScreens.forEach(s => {
+                if (s.id !== screenId && s.classList.contains('active')) {
+                    s.classList.remove('active');
+                    s.classList.add('hidden-left');
+                    setTimeout(() => s.classList.remove('hidden-left'), 300);
+                }
+                if (s.id === screenId) {
+                    s.classList.remove('hidden', 'hidden-left');
+                    s.classList.add('active');
+                    s.scrollTop = 0;
+                }
+            });
+
+            // Update specific screens
+            if (screenId === 'lobby-screen') renderLobbyTab();
+            if (screenId === 'leaderboard-screen') renderLeaderboard();
+            if (screenId === 'profile-screen') renderProfile();
+            if (screenId === 'referral-screen') renderReferralScreen();
+            if (screenId === 'rewards-screen') renderRewards();
+            if (screenId === 'category-screen') renderCategories();
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  TUTORIAL SYSTEM
+        // ═══════════════════════════════════════════════════════════════
+        const TUTORIAL_SLIDES = [
+            { icon: '🎮', title: 'Welcome to AYITOPIA!',
+                body: 'The ultimate Haitian competitive quiz arena. Test your knowledge, compete in real-time, and climb the ranks. This game is FAST and COMPETITIVE.',
+                color: 'var(--neon-blue)' },
+            { icon: '⚔️', title: 'How Matches Work',
+                body: 'Choose a category, enter matchmaking, and face opponents in 10-question battles. Answer FAST for more points. First correct answer gets bonus points!',
+                color: 'var(--neon-purple)' },
+            { icon: '⏱', title: 'Speed-Based Scoring',
+                body: 'The faster you answer correctly, the more points you earn. Slow answers = fewer points. Wrong answers = PENALTY (-25 pts). No answer = 0 points.',
+                color: 'var(--neon-red)' },
+            { icon: '🏆', title: 'Leaderboards',
+                body: 'Compete on Global, Daily, and Weekly leaderboards. Each category has its own ranking. Top players earn real rewards like data recharges!',
+                color: 'var(--neon-gold)' },
+            { icon: '📉', title: 'Ranks Can Go DOWN',
+                body: '⚠️ This game is NOT easy. Poor performance, wrong answers, and losing matches WILL lower your rank. Only the best rise to the top!',
+                color: 'var(--neon-red)' },
+            { icon: '👥', title: 'Referral System',
+                body: 'Invite friends with your unique referral link. Earn +10 points per signup. Share on WhatsApp for bonus points (max 5/day). Top inviters get special badges!',
+                color: 'var(--neon-green)' },
+            { icon: '🎁', title: 'Real Rewards',
+                body: 'Win Natcom or Digicel data recharges! Only top weekly leaderboard players qualify. Limited rewards ensure fairness. Stay consistent to win!',
+                color: 'var(--neon-gold)' },
+            { icon: '🚀', title: 'Ready to Compete?',
+                body: 'You now know the rules. The arena is waiting. Remember: stay sharp, answer fast, and protect your rank. Good luck, champion! 🇭🇹',
+                color: 'var(--neon-blue)' },
+        ];
+
+        function startTutorial() {
+            APP_STATE.tutorialStep = 0;
+            const overlay = document.getElementById('tutorial-overlay');
+            overlay.classList.remove('hidden');
+            renderTutorialSlide();
+        }
+
+        function renderTutorialSlide() {
+            const slide = TUTORIAL_SLIDES[APP_STATE.tutorialStep];
+            const overlay = document.getElementById('tutorial-overlay');
+            const isLast = APP_STATE.tutorialStep >= TUTORIAL_SLIDES.length - 1;
+
+            let dotsHTML = '';
+            for (let i = 0; i < TUTORIAL_SLIDES.length; i++) {
+                let dotClass = '';
+                if (i < APP_STATE.tutorialStep) dotClass = 'done';
+                if (i === APP_STATE.tutorialStep) dotClass = 'active';
+                dotsHTML += `<div class="tutorial-dot ${dotClass}"></div>`;
+            }
+
+            overlay.innerHTML = `
+            <div class="tutorial-card">
+              <div class="tutorial-icon">${slide.icon}</div>
+              <div class="tutorial-title" style="color:${slide.color}">${slide.title}</div>
+              <div class="tutorial-body">${slide.body}</div>
+              <div class="tutorial-dots">${dotsHTML}</div>
+              <div class="tutorial-btns">
+                <button class="btn btn-ghost btn-sm" onclick="skipTutorial()">Skip All</button>
+                <button class="btn btn-primary" onclick="nextTutorialSlide()">
+                  ${isLast ? '🏁 Enter Arena' : 'Next →'}
+                </button>
+              </div>
+            </div>
+          `;
+        }
+
+        function nextTutorialSlide() {
+            APP_STATE.tutorialStep++;
+            if (APP_STATE.tutorialStep >= TUTORIAL_SLIDES.length) {
+                completeTutorial();
+            } else {
+                renderTutorialSlide();
+            }
+        }
+
+        function skipTutorial() {
+            completeTutorial();
+        }
+
+        function completeTutorial() {
+            APP_STATE.tutorialSeen = true;
+            localStorage.setItem('ayitopia_tutorial_seen', 'true');
+            if (currentUserData) currentUserData.tutorialSeen = true;
+            if (db && !DEMO_MODE && currentUser) {
+                db.collection('users').doc(currentUser.uid).update({ tutorialSeen: true }).catch(() => {});
+            }
+            document.getElementById('tutorial-overlay').classList.add('hidden');
+            showScreen('lobby-screen');
+            showToast('✅ Tutorial complete! Good luck in the arena!', 'success');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  LOBBY & TABS
+        // ═══════════════════════════════════════════════════════════════
+        function renderLobbyTab() {
+            const container = document.getElementById('lobby-tab-content');
+            const tab = APP_STATE.lobbyTab;
+            if (tab === 'play') {
+                container.innerHTML = `
+              <div style="font-weight:700;font-size:14px;margin-bottom:8px;">🔥 Popular Categories</div>
+              <div class="category-grid" id="lobby-cat-grid"></div>
+              <button class="btn btn-primary btn-block btn-lg" style="margin-top:8px;" onclick="showScreen('category-screen')">
+                📋 All Categories
+              </button>
+            `;
+                renderLobbyCategories();
+            } else if (tab === 'leaderboard') {
+                container.innerHTML = `<div id="lobby-lb-content"></div>`;
+                renderMiniLeaderboard();
+            } else if (tab === 'referrals') {
+                container.innerHTML = `
+              <div style="text-align:center;font-weight:700;color:var(--neon-gold);">👥 Invite & Earn</div>
+              <div class="ref-code-box">${currentUserData?.referralCode || '----'}</div>
+              <button class="btn btn-gold btn-block btn-sm" onclick="shareWhatsApp()">📲 Share on WhatsApp</button>
+              <button class="btn btn-secondary btn-block btn-sm" style="margin-top:6px;" onclick="showScreen('referral-screen')">View Full Referral Page →</button>
+            `;
+            } else if (tab === 'rewards') {
+                container.innerHTML = `
+              <div id="lobby-rewards-list"></div>
+              <button class="btn btn-secondary btn-block btn-sm" style="margin-top:6px;" onclick="showScreen('rewards-screen')">View All Rewards →</button>
+            `;
+                renderMiniRewards();
+            }
+        }
+
+        function renderLobbyCategories() {
+            const grid = document.getElementById('lobby-cat-grid');
+            if (!grid) return;
+            const cats = Object.entries(CATEGORY_META).slice(0, 6);
+            grid.innerHTML = cats.map(([key, meta]) => `
+            <div class="category-card" onclick="selectCategory('${key}')">
+              <div class="cat-icon">${meta.icon}</div>
+              <div class="cat-name">${meta.name}</div>
+              <div class="cat-players">${getSimulatedPlayers(key)} playing</div>
+              ${key === 'english-creole' ? '<div class="cat-badge">HOT</div>' : ''}
+            </div>
+          `).join('');
+        }
+
+        function renderCategories() {
+            const grid = document.getElementById('category-grid');
+            if (!grid) return;
+            grid.innerHTML = Object.entries(CATEGORY_META).map(([key, meta]) => `
+            <div class="category-card" onclick="selectCategory('${key}')">
+              <div class="cat-icon">${meta.icon}</div>
+              <div class="cat-name">${meta.name}</div>
+              <div class="cat-players">${getSimulatedPlayers(key)} playing now</div>
+              ${key === 'english-creole' || key === 'general-knowledge' ? '<div class="cat-badge">HOT</div>' : ''}
+            </div>
+          `).join('');
+        }
+
+        function getSimulatedPlayers(catKey) {
+            const base = { 'english-creole': 45, 'math': 32, 'general-knowledge': 38, 'science': 20, 'biology': 15,
+                'chemistry': 12, 'social-studies': 18, 'grammar': 14 };
+            return (base[catKey] || 10) + Math.floor(Math.random() * 15);
+        }
+
+        function selectCategory(catKey) {
+            APP_STATE.selectedCategory = catKey;
+            APP_STATE.selectedCategoryName = CATEGORY_META[catKey]?.name || catKey;
+            showScreen('matchmaking-screen');
+            startMatchmaking(catKey);
+        }
+
+        function renderMiniLeaderboard() {
+            const container = document.getElementById('lobby-lb-content');
+            if (!container) return;
+            const entries = generateDemoLeaderboard(8);
+            container.innerHTML = entries.map((e, i) => `
+            <div class="lb-row ${i < 3 ? 'top-' + (i + 1) : ''}">
+              <div class="lb-rank-num">${i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1)}</div>
+              <div class="lb-avatar">${e.avatar}</div>
+              <div class="lb-info"><div class="lb-name">${e.name}</div><div class="lb-stats">${e.matches} matches • ${e.accuracy}% acc</div></div>
+              <div class="lb-score">${e.score.toLocaleString()}</div>
+            </div>
+          `).join('') +
+                `<button class="btn btn-secondary btn-block btn-sm" style="margin-top:8px;" onclick="showScreen('leaderboard-screen')">View Full Leaderboard →</button>`;
+        }
+
+        function generateDemoLeaderboard(count) {
+            const names = ['BrainStorm99', 'KreyolKing', 'MathWizard', 'SciencePro', 'AyitiChamp', 'QuizMaster',
+                'BioGenius', 'ChemLord', 'HistoryBuff', 'GrammarGod', 'SpeedDemon', 'KnowledgeSeeker'
+            ];
+            const avatars = ['🦁', '🐉', '⚡', '🔥', '💎', '🌟', '🦅', '🐺', '🦊', '👑'];
+            const entries = [];
+            for (let i = 0; i < count; i++) {
+                entries.push({
+                    name: names[i] || names[Math.floor(Math.random() * names.length)],
+                    avatar: avatars[i] || '👤',
+                    score: Math.floor(8000 - i * 350 + Math.random() * 100),
+                    matches: Math.floor(40 + Math.random() * 60),
+                    accuracy: Math.floor(65 + Math.random() * 30),
+                });
+            }
+            entries.sort((a, b) => b.score - a.score);
+            return entries;
+        }
+
+        function renderMiniRewards() {
+            const container = document.getElementById('lobby-rewards-list');
+            if (!container) return;
+            container.innerHTML = `
+            <div class="reward-card">
+              <div class="reward-icon">📱</div>
+              <div class="reward-info"><div class="reward-name">Natcom Data Recharge</div><div class="reward-desc">500 MB - Weekly Top 10</div></div>
+              <div class="reward-status locked">🔒 Top 10</div>
+            </div>
+            <div class="reward-card">
+              <div class="reward-icon">📶</div>
+              <div class="reward-info"><div class="reward-name">Digicel Data Recharge</div><div class="reward-desc">1 GB - Weekly Top 3</div></div>
+              <div class="reward-status locked">🔒 Top 3</div>
+            </div>
+          `;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  MATCHMAKING
+        // ═══════════════════════════════════════════════════════════════
+        function startMatchmaking(catKey) {
+            APP_STATE.matchId = null;
+            APP_STATE.matchData = null;
+            APP_STATE.matchFinished = false;
+            document.getElementById('mm-category-name').textContent = 'Category: ' + (CATEGORY_META[catKey]?.name ||
+                catKey);
+            document.getElementById('mm-queue-count').textContent = Math.floor(Math.random() * 8) + 2;
+
+            // Simulate finding a match
+            const waitTime = 1500 + Math.random() * 3000;
+            setTimeout(() => {
+                if (APP_STATE.currentScreen === 'matchmaking-screen') {
+                    createMatch(catKey);
+                }
+            }, waitTime);
+
+            document.getElementById('mm-cancel-btn').onclick = () => {
+                APP_STATE.matchId = null;
+                showScreen('lobby-screen');
+            };
+        }
+
+        function createMatch(catKey) {
+            const questions = generateMatchQuestions(catKey);
+            const botOpponents = generateBotOpponents();
+            const allPlayers = [
+                { uid: currentUser?.uid || 'player_self', username: currentUserData?.username || 'You',
+                    avatar: currentUserData?.avatar || '👤', isBot: false, score: 0, answers: [] },
+                ...botOpponents,
+            ];
+
+            APP_STATE.matchData = {
+                category: catKey,
+                status: 'active',
+                players: allPlayers,
+                questions: questions,
+                currentQuestion: 0,
+                startTime: Date.now(),
+            };
+            APP_STATE.matchId = 'match_' + Date.now();
+            APP_STATE.matchPlayerIndex = 0;
+            APP_STATE.currentQuestionIndex = 0;
+            APP_STATE.answersSubmitted = [];
+            APP_STATE.matchScores = {};
+            APP_STATE.matchFinished = false;
+            allPlayers.forEach(p => { APP_STATE.matchScores[p.uid] = 0; });
+
+            showScreen('match-screen');
+            startQuestion(0);
+        }
+
+        function generateMatchQuestions(catKey) {
+            const bank = QUESTION_BANK[catKey] || QUESTION_BANK['general-knowledge'];
+            const shuffled = [...bank].sort(() => Math.random() - 0.5);
+            const selected = shuffled.slice(0, 10);
+            // Ensure we have 10 questions
+            while (selected.length < 10) {
+                const extraPool = Object.values(QUESTION_BANK).flat();
+                const extra = extraPool[Math.floor(Math.random() * extraPool.length)];
+                if (!selected.find(s => s.q === extra.q)) selected.push(extra);
+            }
+            return selected.slice(0, 10).map((q, i) => ({
+                ...q,
+                id: 'q_' + i,
+                timeLimit: q.difficulty === 3 ? 25 : q.difficulty === 2 ? 20 : 15,
+            }));
+        }
+
+        function generateBotOpponents() {
+            const botNames = ['ShadowBlade', 'QuizPhantom', 'BrainStorm', 'SpeedKing', 'NightHawk', 'ThunderMind',
+            'RapidFire'];
+            const botAvatars = ['🦊', '🐺', '🦅', '⚡', '🔥', '💀', '👾'];
+            const count = 2 + Math.floor(Math.random() * 3); // 2-4 bots
+            const bots = [];
+            const usedNames = new Set();
+            for (let i = 0; i < count; i++) {
+                let name = botNames[Math.floor(Math.random() * botNames.length)];
+                while (usedNames.has(name)) name = botNames[Math.floor(Math.random() * botNames.length)] + '_' + i;
+                usedNames.add(name);
+                bots.push({
+                    uid: 'bot_' + i + '_' + Date.now(),
+                    username: name,
+                    avatar: botAvatars[i % botAvatars.length],
+                    isBot: true,
+                    score: 0,
+                    answers: [],
+                    skillLevel: 0.4 + Math.random() * 0.5, // 40-90% chance of correct answer
+                    speedFactor: 0.3 + Math.random() * 0.7, // How fast they answer (fraction of time limit)
+                });
+            }
+            return bots;
+        }
+  // ═══════════════════════════════════════════════════════════════
+        //  MATCH GAMEPLAY
+        // ═══════════════════════════════════════════════════════════════
+        function startQuestion(index) {
+            if (index >= 10 || APP_STATE.matchFinished) {
+                endMatch();
+                return;
+            }
+            APP_STATE.currentQuestionIndex = index;
+            APP_STATE.answersSubmitted = [];
+            const q = APP_STATE.matchData.questions[index];
+            APP_STATE.questionStartTime = Date.now();
+            APP_STATE.questionTimeLimit = q.timeLimit || 20;
+
+            document.getElementById('match-q-num').textContent = `Question ${index + 1} / 10`;
+            document.getElementById('match-question').textContent = q.q;
+            const optsContainer = document.getElementById('match-options');
+            optsContainer.innerHTML = q.opts.map((opt, i) => `
+            <div class="match-option" data-index="${i}" onclick="submitAnswer(${i})">${opt}</div>
+          `).join('');
+            document.getElementById('match-timer-fill').style.width = '100%';
+            document.getElementById('match-timer-fill').classList.remove('urgent');
+            updateLiveScores();
+
+            // Simulate bot answers
+            if (APP_STATE.matchData) {
+                APP_STATE.matchData.players.forEach((p, pi) => {
+                    if (p.isBot && !APP_STATE.answersSubmitted.includes(p.uid)) {
+                        const botDelay = p.speedFactor * APP_STATE.questionTimeLimit * 1000;
+                        const botCorrect = Math.random() < p.skillLevel;
+                        const botAnswer = botCorrect ? q.correct : Math.floor(Math.random() * q.opts.length);
+                        setTimeout(() => {
+                            if (!APP_STATE.answersSubmitted.includes(p.uid) && APP_STATE.matchData &&
+                                APP_STATE.currentQuestionIndex === index) {
+                                processBotAnswer(p, pi, botAnswer, q);
+                            }
+                        }, Math.max(800, botDelay));
+                    }
+                });
+            }
+
+            // Timer
+            const timerFill = document.getElementById('match-timer-fill');
+            const totalMs = APP_STATE.questionTimeLimit * 1000;
+            const timerInterval = setInterval(() => {
+                if (APP_STATE.matchFinished || APP_STATE.currentQuestionIndex !== index) {
+                    clearInterval(timerInterval);
+                    return;
+                }
+                const elapsed = Date.now() - APP_STATE.questionStartTime;
+                const remaining = Math.max(0, totalMs - elapsed);
+                const pct = (remaining / totalMs) * 100;
+                timerFill.style.width = pct + '%';
+                if (pct < 25) timerFill.classList.add('urgent');
+                if (remaining <= 0) {
+                    clearInterval(timerInterval);
+                    moveToNextQuestion();
+                }
+            }, 100);
+
+            // Store interval for cleanup
+            APP_STATE._timerInterval = timerInterval;
+        }
+
+        function submitAnswer(optionIndex) {
+            const playerUid = currentUser?.uid || 'player_self';
+            if (APP_STATE.answersSubmitted.includes(playerUid)) return;
+            if (APP_STATE.matchFinished) return;
+
+            APP_STATE.answersSubmitted.push(playerUid);
+            const q = APP_STATE.matchData.questions[APP_STATE.currentQuestionIndex];
+            const isCorrect = optionIndex === q.correct;
+            const timeElapsed = (Date.now() - APP_STATE.questionStartTime) / 1000;
+            const timeLimit = APP_STATE.questionTimeLimit;
+            const speedRatio = Math.max(0, 1 - (timeElapsed / timeLimit));
+            const speedBonus = Math.floor(speedRatio * 50);
+            const basePoints = isCorrect ? 100 : -25;
+            const totalPoints = isCorrect ? basePoints + speedBonus + (APP_STATE.answersSubmitted.length === 1 ? 25 :
+                0) : basePoints;
+
+            APP_STATE.matchScores[playerUid] = (APP_STATE.matchScores[playerUid] || 0) + totalPoints;
+            if (APP_STATE.matchData) {
+                const playerData = APP_STATE.matchData.players[APP_STATE.matchPlayerIndex];
+                if (playerData) playerData.score = APP_STATE.matchScores[playerUid];
+            }
+
+            // Visual feedback
+            const opts = document.querySelectorAll('.match-option');
+            opts.forEach((opt, i) => {
+                opt.style.pointerEvents = 'none';
+                if (i === q.correct) opt.classList.add('correct');
+                if (i === optionIndex && !isCorrect) opt.classList.add('wrong');
+                if (i === optionIndex && isCorrect) opt.classList.add('correct');
+            });
+
+            updateLiveScores();
+
+            // Move to next question after short delay
+            setTimeout(() => {
+                if (!APP_STATE.matchFinished) moveToNextQuestion();
+            }, 1200);
+        }
+
+        function processBotAnswer(botPlayer, botIndex, answer, question) {
+            const botUid = botPlayer.uid;
+            if (APP_STATE.answersSubmitted.includes(botUid)) return;
+            APP_STATE.answersSubmitted.push(botUid);
+
+            const isCorrect = answer === question.correct;
+            const timeElapsed = (Date.now() - APP_STATE.questionStartTime) / 1000;
+            const timeLimit = APP_STATE.questionTimeLimit;
+            const speedRatio = Math.max(0, 1 - (timeElapsed / timeLimit));
+            const speedBonus = Math.floor(speedRatio * 50);
+            const basePoints = isCorrect ? 100 : -25;
+            const totalPoints = isCorrect ? basePoints + speedBonus + (APP_STATE.answersSubmitted.length <= 2 ? 25 : 0) :
+                basePoints;
+
+            APP_STATE.matchScores[botUid] = (APP_STATE.matchScores[botUid] || 0) + totalPoints;
+            botPlayer.score = APP_STATE.matchScores[botUid];
+            updateLiveScores();
+
+            // Check if all players have answered
+            const allPlayerUids = APP_STATE.matchData.players.map(p => p.uid);
+            const allAnswered = allPlayerUids.every(uid => APP_STATE.answersSubmitted.includes(uid));
+            if (allAnswered && !APP_STATE.matchFinished) {
+                setTimeout(() => moveToNextQuestion(), 600);
+            }
+        }
+
+        function moveToNextQuestion() {
+            if (APP_STATE._timerInterval) clearInterval(APP_STATE._timerInterval);
+            const nextIndex = APP_STATE.currentQuestionIndex + 1;
+            if (nextIndex >= 10) {
+                endMatch();
+            } else {
+                startQuestion(nextIndex);
+            }
+        }
+
+        function updateLiveScores() {
+            const container = document.getElementById('match-live-scores');
+            if (!container || !APP_STATE.matchData) return;
+            const sorted = [...APP_STATE.matchData.players].sort((a, b) =>
+                (APP_STATE.matchScores[b.uid] || 0) - (APP_STATE.matchScores[a.uid] || 0)
+            );
+            const playerUid = currentUser?.uid || 'player_self';
+            container.innerHTML = sorted.map((p, i) => `
+            <div class="live-score-chip ${p.uid === playerUid ? 'me' : ''}">
+              ${i === 0 ? '<span class="crown">👑</span>' : ''}
+              ${p.avatar} ${p.username}: <strong>${APP_STATE.matchScores[p.uid] || 0}</strong>
+            </div>
+          `).join('');
+        }
+
+        function endMatch() {
+            APP_STATE.matchFinished = true;
+            if (APP_STATE._timerInterval) clearInterval(APP_STATE._timerInterval);
+
+            const playerUid = currentUser?.uid || 'player_self';
+            const allPlayers = APP_STATE.matchData?.players || [];
+            const sorted = [...allPlayers].sort((a, b) =>
+                (APP_STATE.matchScores[b.uid] || 0) - (APP_STATE.matchScores[a.uid] || 0)
+            );
+            const playerRank = sorted.findIndex(p => p.uid === playerUid) + 1;
+            const playerScore = APP_STATE.matchScores[playerUid] || 0;
+            const totalQuestions = 10;
+            const correctAnswers = APP_STATE.matchData?.players[APP_STATE.matchPlayerIndex]?.answers?.filter(a => a
+                .correct)?.length || Math.floor(Math.random() * 7) + 1;
+            const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
+            const xpGained = Math.max(0, playerScore);
+            const rankChange = playerRank <= 2 ? Math.floor(Math.random() * 15) + 5 : playerRank >= sorted.length - 1 ?
+                -(Math.floor(Math.random() * 10) + 3) : Math.floor(Math.random() * 8) - 3;
+
+            // Update user data
+            if (currentUserData) {
+                currentUserData.stats.totalScore += xpGained;
+                currentUserData.stats.totalMatches = (currentUserData.stats.totalMatches || 0) + 1;
+                if (playerRank === 1) currentUserData.stats.wins = (currentUserData.stats.wins || 0) + 1;
+                currentUserData.stats.accuracy = Math.round(
+                    ((currentUserData.stats.accuracy || 50) * (currentUserData.stats.totalMatches - 1) + accuracy) /
+                    currentUserData.stats.totalMatches
+                );
+                currentUserData.stats.rank = Math.max(1, (currentUserData.stats.rank || 500) + (rankChange > 0 ? -
+                    rankChange : Math.abs(rankChange)));
+            }
+
+            const resultsHTML = `
+            <div class="results-rank">#${playerRank}</div>
+            <div style="font-weight:700;font-size:16px;">${playerRank === 1 ? '🏆 VICTORY!' : playerRank <= 2 ? '🥈 Great Job!' : playerRank <= 3 ? '🥉 Good Effort!' : 'Keep Practicing!'}</div>
+            <div class="results-xp">+${xpGained} XP</div>
+            <div class="results-rank-change ${rankChange >= 0 ? 'up' : 'down'}">
+              ${rankChange >= 0 ? '📈 Rank improved by ' + rankChange : '📉 Rank dropped by ' + Math.abs(rankChange)}
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Accuracy: ${accuracy}% • Correct: ${correctAnswers}/10</div>
+            <div style="margin-top:10px;font-size:12px;color:var(--text-secondary);">
+              ${sorted.slice(0, 3).map((p, i) => `${['👑','🥈','🥉'][i]} ${p.username}: ${APP_STATE.matchScores[p.uid]||0} pts`).join(' • ')}
+            </div>
+          `;
+            document.getElementById('results-content').innerHTML = resultsHTML;
+            showScreen('results-screen');
+            updateAllUI();
+        }
+
+        function restartMatchmaking() {
+            if (APP_STATE.selectedCategory) {
+                showScreen('matchmaking-screen');
+                startMatchmaking(APP_STATE.selectedCategory);
+            } else {
+                showScreen('category-screen');
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  LEADERBOARD
+        // ═══════════════════════════════════════════════════════════════
+        function renderLeaderboard() {
+            const container = document.getElementById('lb-content');
+            if (!container) return;
+            const tab = APP_STATE.leaderboardTab;
+            const entries = generateDemoLeaderboard(20);
+            const titleMap = { global: '🌍 Global Rankings', daily: '📅 Daily Rankings', weekly: '📊 Weekly Rankings',
+                referral: '👥 Top Inviters' };
+            container.innerHTML = `
+            <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--text-secondary);">${titleMap[tab] || 'Rankings'}</div>
+            ${entries.map((e, i) => `
+              <div class="lb-row ${i < 3 ? 'top-' + (i + 1) : ''}">
+                <div class="lb-rank-num">${i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1)}</div>
+                <div class="lb-avatar">${e.avatar}</div>
+                <div class="lb-info"><div class="lb-name">${e.name}</div><div class="lb-stats">${e.matches} matches • ${e.accuracy}% accuracy</div></div>
+                <div class="lb-score">${e.score.toLocaleString()}</div>
+              </div>
+            `).join('')}
+          `;
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  PROFILE
+        // ═══════════════════════════════════════════════════════════════
+        function renderProfile() {
+            if (!currentUserData) return;
+            document.getElementById('profile-avatar').textContent = currentUserData.avatar || '👤';
+            document.getElementById('profile-username').textContent = currentUserData.username || 'Player';
+            document.getElementById('profile-refcode').textContent = 'Code: ' + (currentUserData.referralCode || '---');
+            document.getElementById('prof-wins').textContent = currentUserData.stats?.wins || 0;
+            document.getElementById('prof-score').textContent = (currentUserData.stats?.totalScore || 0)
+            .toLocaleString();
+            document.getElementById('prof-accuracy').textContent = (currentUserData.stats?.accuracy || 0) + '%';
+            document.getElementById('prof-rank').textContent = '#' + (currentUserData.stats?.rank || '--');
+
+            const badgesContainer = document.getElementById('profile-badges');
+            const refCount = currentUserData.referralCount || 0;
+            let badgesHTML = '';
+            if (refCount >= 50) badgesHTML +=
+                '<span class="badge-chip badge-legend">👑 Legend Influencer</span>';
+            if (refCount >= 20) badgesHTML +=
+                '<span class="badge-chip badge-growth">🥇 Growth Master</span>';
+            if (refCount >= 5) badgesHTML +=
+                '<span class="badge-chip badge-recruiter">🔥 Recruiter</span>';
+            if (!badgesHTML) badgesHTML =
+                '<span style="color:var(--text-muted);font-size:11px;">No badges yet. Invite friends to earn!</span>';
+            badgesContainer.innerHTML = badgesHTML;
+        }
+
+        function handleLogout() {
+            if (DEMO_MODE) {
+                currentUser = generateDemoUser();
+                currentUserData = generateDemoUserData(currentUser);
+                showScreen('lobby-screen');
+                showToast('👋 Switched demo account', 'info');
+            } else if (auth) {
+                auth.signOut().then(() => {
+                    showScreen('lobby-screen');
+                }).catch(() => {
+                    showToast('Logout failed', 'error');
+                });
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  REFERRAL SYSTEM
+        // ═══════════════════════════════════════════════════════════════
+        function renderReferralScreen() {
+            if (!currentUserData) return;
+            const refCode = currentUserData.referralCode || '----';
+            const refLink = window.location.origin + window.location.pathname + '?ref=' + refCode;
+            document.getElementById('ref-code-box').textContent = refCode;
+            document.getElementById('ref-link-input').value = refLink;
+            document.getElementById('ref-stats').textContent =
+                `Total invites: ${currentUserData.referralCount || 0} | Points earned: ${currentUserData.referralPoints || 0}`;
+        }
+
+        function copyRefLink() {
+            const input = document.getElementById('ref-link-input');
+            if (input && input.value) {
+                navigator.clipboard.writeText(input.value).then(() => {
+                    showToast('📋 Referral link copied!', 'success');
+                }).catch(() => {
+                    input.select();
+                    document.execCommand('copy');
+                    showToast('📋 Copied!', 'success');
+                });
+            }
+        }
+
+        function shareWhatsApp() {
+            const today = new Date().toDateString();
+            if (APP_STATE.lastWhatsAppShareDate === today && APP_STATE.dailyWhatsAppShares >= 5) {
+                showToast('⚠️ Daily WhatsApp share limit reached (5/day)', 'error');
+                return;
+            }
+            if (APP_STATE.lastWhatsAppShareDate !== today) {
+                APP_STATE.dailyWhatsAppShares = 0;
+                APP_STATE.lastWhatsAppShareDate = today;
+            }
+            const refCode = currentUserData?.referralCode || 'AYITOPIA';
+            const refLink = window.location.origin + window.location.pathname + '?ref=' + refCode;
+            const text = encodeURIComponent(
+                `🔥 Join me on AYITOPIA - the ultimate Haitian quiz arena! 🇭🇹\n\nCompete in real-time quizzes, climb the leaderboard, and win real rewards!\n\nUse my referral link: ${refLink}\n\nSee you in the arena! ⚔️`
+            );
+            const waUrl = `https://wa.me/?text=${text}`;
+            window.open(waUrl, '_blank');
+
+            APP_STATE.dailyWhatsAppShares++;
+            localStorage.setItem('ayitopia_daily_shares', APP_STATE.dailyWhatsAppShares.toString());
+            localStorage.setItem('ayitopia_share_date', today);
+            if (currentUserData) {
+                currentUserData.dailyWhatsAppShares = APP_STATE.dailyWhatsAppShares;
+                currentUserData.lastWhatsAppShareDate = today;
+                if (APP_STATE.dailyWhatsAppShares <= 5) {
+                    currentUserData.stats.totalScore = (currentUserData.stats.totalScore || 0) + 1;
+                    currentUserData.referralPoints = (currentUserData.referralPoints || 0) + 1;
+                }
+            }
+            updateAllUI();
+            showToast('📲 Shared on WhatsApp! +1 point', 'success');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  REWARDS
+        // ═══════════════════════════════════════════════════════════════
+        function renderRewards() {
+            const container = document.getElementById('rewards-list');
+            if (!container) return;
+            const rewards = [
+                { icon: '📱', name: 'Natcom Data - 250 MB', desc: 'Weekly Top 20', requirement: 'Top 20 weekly',
+                    available: false },
+                { icon: '📱', name: 'Natcom Data - 500 MB', desc: 'Weekly Top 10', requirement: 'Top 10 weekly',
+                    available: false },
+                { icon: '📶', name: 'Digicel Data - 1 GB', desc: 'Weekly Top 3', requirement: 'Top 3 weekly',
+                    available: false },
+                { icon: '🏆', name: 'Digicel Data - 3 GB', desc: 'Weekly #1 Champion', requirement: '#1 weekly',
+                    available: false },
+                { icon: '🎖️', name: 'Exclusive Badge', desc: 'Monthly Top 5', requirement: 'Top 5 monthly',
+                    available: false },
+            ];
+            container.innerHTML = rewards.map(r => `
+            <div class="reward-card">
+              <div class="reward-icon">${r.icon}</div>
+              <div class="reward-info"><div class="reward-name">${r.name}</div><div class="reward-desc">${r.desc}</div></div>
+              <div class="reward-status ${r.available ? 'available' : 'locked'}">${r.available ? '✅ Available' : '🔒 ' + r.requirement}</div>
+            </div>
+          `).join('');
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  REAL-TIME LISTENERS (Firebase)
+        // ═══════════════════════════════════════════════════════════════
+        function startRealtimeListeners() {
+            if (!db || DEMO_MODE) return;
+            // Listen for global online count
+            try {
+                db.collection('users').onSnapshot(() => {
+                    updateOnlineCount();
+                }, () => {});
+            } catch (e) { console.warn('Realtime listener error:', e); }
+        }
+
+        function updateOnlineCount() {
+            const count = DEMO_MODE ? Math.floor(Math.random() * 80) + 30 : 42;
+            const el = document.getElementById('global-online');
+            if (el) el.textContent = count;
+        }
+
+        function simulateOnlinePlayers() {
+            const el = document.getElementById('global-online');
+            if (el) el.textContent = Math.floor(Math.random() * 60) + 35;
+            setInterval(() => {
+                const el2 = document.getElementById('global-online');
+                if (el2 && APP_STATE.currentScreen === 'lobby-screen') {
+                    el2.textContent = Math.floor(Math.random() * 60) + 35;
+                }
+            }, 15000);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  UI HELPERS
+        // ═══════════════════════════════════════════════════════════════
+        function updateAllUI() {
+            const scoreEl = document.getElementById('user-score-display');
+            const rankEl = document.getElementById('user-rank-display');
+            if (scoreEl && currentUserData) scoreEl.textContent = (currentUserData.stats?.totalScore || 0)
+            .toLocaleString();
+            if (rankEl && currentUserData) rankEl.textContent = '#' + (currentUserData.stats?.rank || '--');
+            updateOnlineCount();
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                if (toast.parentNode) toast.parentNode.removeChild(toast);
+            }, 3000);
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        //  EVENT LISTENERS
+        // ═══════════════════════════════════════════════════════════════
+        document.addEventListener('DOMContentLoaded', () => {
+            // Lobby nav tabs
+            document.getElementById('lobby-nav-tabs')?.addEventListener('click', (e) => {
+                const tab = e.target.closest('.nav-tab');
+                if (!tab) return;
+                const tabName = tab.dataset.tab;
+                if (!tabName) return;
+                document.querySelectorAll('#lobby-nav-tabs .nav-tab').forEach(t => t.classList.remove(
+                    'active'));
+                tab.classList.add('active');
+                APP_STATE.lobbyTab = tabName;
+                if (tabName === 'leaderboard') {
+                    showScreen('leaderboard-screen');
+                } else if (tabName === 'referrals') {
+                    showScreen('referral-screen');
+                } else if (tabName === 'rewards') {
+                    showScreen('rewards-screen');
+                } else {
+                    renderLobbyTab();
+                }
+            });
+
+            // Leaderboard tabs
+            document.getElementById('lb-tabs')?.addEventListener('click', (e) => {
+                const tab = e.target.closest('.nav-tab');
+                if (!tab || !tab.dataset.lb) return;
+                document.querySelectorAll('#lb-tabs .nav-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                APP_STATE.leaderboardTab = tab.dataset.lb;
+                renderLeaderboard();
+            });
+
+            // Handle back button in browser
+            window.addEventListener('popstate', () => {
+                if (APP_STATE.currentScreen === 'match-screen') return; // Prevent back during match
+                showScreen('lobby-screen');
+            });
+
+            // Keyboard shortcut for demo
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 't' && e.ctrlKey) {
+                    e.preventDefault();
+                    APP_STATE.tutorialSeen = false;
+                    localStorage.removeItem('ayitopia_tutorial_seen');
+                    startTutorial();
+                    showToast('🔄 Tutorial reset', 'info');
+                }
+            });
+        });
+
+        // ═══════════════════════════════════════════════════════════════
+        //  START THE APP
+        // ═══════════════════════════════════════════════════════════════
+        initApp();
+        console.log('⚔️  AYITOPIA - Haitian Competitive Quiz Arena');
+        console.log('🏆 Built for champions. Ready for battle.');
+        console.log('💡 Tip: Press Ctrl+T to re-trigger the tutorial.');
+        console.log('📋 Firebase: ' + (DEMO_MODE ? 'Running in DEMO mode (offline).' :
+            'Configure FIREBASE_CONFIG for full functionality.'));
+    </script>
+</body>
+</html>
