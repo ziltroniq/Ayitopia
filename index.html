@@ -818,44 +818,45 @@
       }
     });
 
-    document.getElementById('form-inscription').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const pseudo = document.getElementById('signup-username').value.trim();
-      const email = document.getElementById('signup-email').value.trim();
-      const refCode = document.getElementById('signup-refcode').value.trim();
-      const pwd = document.getElementById('signup-password').value;
-      if (!pseudo) return afficherErreurAuth('Le pseudo est requis');
-      if (!email) return afficherErreurAuth('L\'email est requis');
-      if (!pwd || pwd.length < 6) return afficherErreurAuth('Le mot de passe doit faire au moins 6 caractères');
-      try {
-        const cred = await auth.createUserWithEmailAndPassword(email, pwd);
-        await cred.user.updateProfile({ displayName: pseudo });
-        ETAT_APP.parrainageEnAttente = refCode || null;
-        afficherToast('🎉 Compte créé ! Bienvenue ' + pseudo, 'succes');
-      } catch (err) {
-        afficherErreurAuth(err.message || 'Erreur d\'inscription');
-      }
-    });
-       // ═══ ÉTAT UTILISATEUR (déplacé ici) ═══
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        utilisateurActuel = user;
-        await chargerDonneesUtilisateur(user);
-        if (!donneesUtilisateur) await creerNouvelUtilisateur(user);
-        ETAT_APP.tutorielVu = donneesUtilisateur?.tutorielVu || false;
-        document.getElementById('ecran-auth').classList.remove('active');
-        document.getElementById('ecran-chargement').classList.remove('active');
-        if (!ETAT_APP.tutorielVu) lancerTutoriel();
-        else afficherEcran('ecran-lobby');
-        mettreAJourTouteInterface();
-      } else {
-        utilisateurActuel = null;
-        donneesUtilisateur = null;
-        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-        document.getElementById('ecran-auth').classList.add('active');
-      }
-    });
-  }
+      document.getElementById('form-inscription').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const pseudo = document.getElementById('signup-username').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const refCode = document.getElementById('signup-refcode').value.trim();
+    const pwd = document.getElementById('signup-password').value;
+    if (!pseudo) return afficherErreurAuth('Le pseudo est requis');
+    if (!email) return afficherErreurAuth('L\'email est requis');
+    if (!pwd || pwd.length < 6) return afficherErreurAuth('Le mot de passe doit faire au moins 6 caractères');
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(email, pwd);
+      await cred.user.updateProfile({ displayName: pseudo });
+      ETAT_APP.parrainageEnAttente = refCode || null;
+      afficherToast('🎉 Compte créé ! Bienvenue ' + pseudo, 'succes');
+    } catch (err) {
+      afficherErreurAuth(err.message || 'Erreur d\'inscription');
+    }
+  });
+
+  // ═══ ÉTAT UTILISATEUR ═══
+  auth.onAuthStateChanged(async (user) => {
+    if (user) {
+      utilisateurActuel = user;
+      await chargerDonneesUtilisateur(user);
+      if (!donneesUtilisateur) await creerNouvelUtilisateur(user);
+      ETAT_APP.tutorielVu = donneesUtilisateur?.tutorielVu || false;
+      document.getElementById('ecran-auth').classList.remove('active');
+      document.getElementById('ecran-chargement').classList.remove('active');
+      if (!ETAT_APP.tutorielVu) lancerTutoriel();
+      else afficherEcran('ecran-lobby');
+      mettreAJourTouteInterface();
+    } else {
+      utilisateurActuel = null;
+      donneesUtilisateur = null;
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('ecran-auth').classList.add('active');
+    }
+  });
+} // <-- accolade fermante de configurerAuth()
 
   function afficherErreurAuth(msg) {
     document.getElementById('auth-erreur').textContent = msg;
