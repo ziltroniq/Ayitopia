@@ -1,34 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>AYITOPIA - Haitian Competitive Quiz Arena</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AYITOPIA – Arène de Quiz Compétitive Haïtienne</title>
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js">
-    </script>
+    <!-- Firebase SDKs (remplacer par vos propres clés pour la production) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
         :root {
-            --bg-primary: #0a0a0f;
-            --bg-secondary: #111118;
-            --bg-card: #16161f;
-            --bg-card-hover: #1c1c28;
+            --bg-primary: #08080f;
+            --bg-secondary: #0f0f18;
+            --bg-card: #141420;
+            --bg-card-hover: #1a1a28;
             --neon-blue: #00d4ff;
             --neon-blue-dim: #0088aa;
-            --neon-red: #ff3355;
+            --neon-red: #ff2d4b;
             --neon-gold: #ffb800;
             --neon-green: #00e676;
             --neon-purple: #b44dff;
-            --text-primary: #e8e8f0;
-            --text-secondary: #a0a0b8;
-            --text-muted: #6a6a80;
-            --border-subtle: #1e1e2c;
+            --text-primary: #eaeaef;
+            --text-secondary: #a8a8bc;
+            --text-muted: #6a6a82;
+            --border-subtle: #1e1e30;
             --border-glow: rgba(0, 212, 255, 0.25);
             --shadow-glow: 0 0 30px rgba(0, 212, 255, 0.15);
             --shadow-gold: 0 0 30px rgba(255, 184, 0, 0.2);
@@ -37,7 +34,6 @@
             --radius-lg: 20px;
             --radius-xl: 28px;
             --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
             --transition-fast: 0.15s ease;
             --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -48,13 +44,12 @@
             box-sizing: border-box;
         }
 
-        html,
-        body {
+        html, body {
             width: 100%;
             height: 100%;
             overflow: hidden;
             font-family: var(--font-main);
-            background: var(--bg-primary);
+            background: #000;
             color: var(--text-primary);
             -webkit-tap-highlight-color: transparent;
             -webkit-font-smoothing: antialiased;
@@ -62,7 +57,6 @@
             -webkit-user-select: none;
         }
 
-        /* ── SCREEN CONTAINER ── */
         #app-root {
             width: 100%;
             height: 100%;
@@ -70,10 +64,8 @@
             margin: 0 auto;
             position: relative;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
             background: var(--bg-primary);
-            box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 60px rgba(0,0,0,0.8);
         }
 
         @media (min-width: 768px) {
@@ -86,38 +78,24 @@
             }
         }
 
-        /* ── SCREENS ── */
+        /* ── ÉCRANS ── */
         .screen {
             position: absolute;
             inset: 0;
-            display: flex;
+            display: none;
             flex-direction: column;
             overflow-y: auto;
             overflow-x: hidden;
             padding: 16px;
-            transition: transform var(--transition-smooth), opacity var(--transition-smooth);
-            will-change: transform, opacity;
-        }
-        .screen.hidden {
-            transform: translateX(40px);
-            opacity: 0;
-            pointer-events: none;
-            z-index: 0;
+            background: var(--bg-primary);
+            z-index: 1;
         }
         .screen.active {
-            transform: translateX(0);
-            opacity: 1;
-            pointer-events: auto;
+            display: flex;
             z-index: 10;
         }
-        .screen.hidden-left {
-            transform: translateX(-40px);
-            opacity: 0;
-            pointer-events: none;
-            z-index: 0;
-        }
 
-        /* ── LOADING SCREEN ── */
+        /* ── CHARGEMENT ── */
         #loading-screen {
             display: flex;
             align-items: center;
@@ -126,7 +104,7 @@
             gap: 24px;
             z-index: 100;
         }
-        #loading-screen .logo-pulse {
+        .logo-pulse {
             font-size: 48px;
             font-weight: 900;
             letter-spacing: 2px;
@@ -137,60 +115,45 @@
             animation: pulse-glow 1.5s ease-in-out infinite;
         }
         @keyframes pulse-glow {
-            0%,
-            100% {
-                filter: brightness(1);
-            }
-            50% {
-                filter: brightness(1.5);
-            }
+            0%,100% { filter: brightness(1); }
+            50% { filter: brightness(1.6); }
         }
-        #loading-screen .loader-bar {
+        .loader-bar {
             width: 120px;
             height: 4px;
             background: var(--border-subtle);
             border-radius: 4px;
             overflow: hidden;
         }
-        #loading-screen .loader-bar-fill {
+        .loader-bar-fill {
             height: 100%;
             background: var(--neon-blue);
             border-radius: 4px;
             animation: load-slide 1.2s ease-in-out infinite;
         }
         @keyframes load-slide {
-            0% {
-                width: 0;
-                margin-left: 0;
-            }
-            50% {
-                width: 60%;
-                margin-left: 20%;
-            }
-            100% {
-                width: 0;
-                margin-left: 100%;
-            }
+            0% { width:0; margin-left:0; }
+            50% { width:60%; margin-left:20%; }
+            100% { width:0; margin-left:100%; }
         }
 
-        /* ── TUTORIAL OVERLAY ── */
-        #tutorial-overlay {
-            position: absolute;
+        /* ── TUTORIEL (superposition) ── */
+        #tutoriel-overlay {
+            position: fixed;
             inset: 0;
             z-index: 200;
-            background: rgba(0, 0, 0, 0.92);
+            background: rgba(0,0,0,0.92);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            transition: opacity var(--transition-smooth);
+            backdrop-filter: blur(8px);
         }
-        #tutorial-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
+        #tutoriel-overlay.hidden {
+            display: none;
         }
-        .tutorial-card {
+        .tutoriel-card {
             background: var(--bg-card);
             border: 1px solid var(--border-glow);
             border-radius: var(--radius-lg);
@@ -202,78 +165,62 @@
             animation: card-pop 0.4s ease;
         }
         @keyframes card-pop {
-            0% {
-                transform: scale(0.85);
-                opacity: 0;
-            }
-            100% {
-                transform: scale(1);
-                opacity: 1;
-            }
+            0% { transform: scale(0.85); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
         }
-        .tutorial-icon {
+        .tutoriel-icone {
             font-size: 64px;
             margin-bottom: 12px;
             animation: bounce-icon 0.6s ease;
         }
         @keyframes bounce-icon {
-            0%,
-            100% {
-                transform: translateY(0);
-            }
-            30% {
-                transform: translateY(-18px);
-            }
-            50% {
-                transform: translateY(0);
-            }
-            70% {
-                transform: translateY(-8px);
-            }
+            0%,100% { transform: translateY(0); }
+            30% { transform: translateY(-18px); }
+            50% { transform: translateY(0); }
+            70% { transform: translateY(-8px); }
         }
-        .tutorial-title {
+        .tutoriel-titre {
             font-size: 22px;
             font-weight: 800;
             color: var(--neon-blue);
             margin-bottom: 8px;
-            letter-spacing: 0.5px;
         }
-        .tutorial-body {
+        .tutoriel-corps {
             font-size: 14px;
             color: var(--text-secondary);
             line-height: 1.6;
             margin-bottom: 20px;
         }
-        .tutorial-dots {
+        .tutoriel-points {
             display: flex;
             gap: 8px;
             justify-content: center;
             margin-bottom: 18px;
         }
-        .tutorial-dot {
+        .tutoriel-point {
             width: 10px;
             height: 10px;
             border-radius: 50%;
             background: var(--border-subtle);
             transition: all var(--transition-fast);
         }
-        .tutorial-dot.active {
+        .tutoriel-point.actif {
             background: var(--neon-blue);
             box-shadow: 0 0 10px var(--neon-blue);
             width: 28px;
             border-radius: 10px;
         }
-        .tutorial-dot.done {
+        .tutoriel-point.fait {
             background: var(--neon-green);
         }
-        .tutorial-btns {
+        .tutoriel-btns {
             display: flex;
             gap: 12px;
             justify-content: center;
             flex-wrap: wrap;
         }
 
-        /* ── BUTTONS ── */
+        /* ── BOUTONS ── */
         .btn {
             display: inline-flex;
             align-items: center;
@@ -287,68 +234,43 @@
             border: none;
             transition: all var(--transition-fast);
             letter-spacing: 0.3px;
-            position: relative;
-            overflow: hidden;
-            font-family: var(--font-main);
+            font-family: inherit;
+            white-space: nowrap;
         }
-        .btn:active {
-            transform: scale(0.95);
-        }
-        .btn-primary {
+        .btn:active { transform: scale(0.95); }
+        .btn-primaire {
             background: linear-gradient(135deg, var(--neon-blue), #0099cc);
             color: #000;
-            box-shadow: 0 4px 20px rgba(0, 212, 255, 0.35);
+            box-shadow: 0 4px 20px rgba(0,212,255,0.35);
         }
-        .btn-primary:hover {
-            box-shadow: 0 6px 28px rgba(0, 212, 255, 0.5);
-            transform: translateY(-1px);
-        }
-        .btn-secondary {
+        .btn-primaire:hover { box-shadow: 0 6px 28px rgba(0,212,255,0.5); transform: translateY(-1px); }
+        .btn-secondaire {
             background: transparent;
             color: var(--neon-blue);
             border: 2px solid var(--neon-blue);
         }
-        .btn-secondary:hover {
-            background: rgba(0, 212, 255, 0.08);
-        }
-        .btn-ghost {
+        .btn-secondaire:hover { background: rgba(0,212,255,0.08); }
+        .btn-fantome {
             background: transparent;
             color: var(--text-secondary);
             border: 1px solid var(--border-subtle);
         }
-        .btn-ghost:hover {
-            border-color: var(--text-muted);
-            color: var(--text-primary);
-        }
+        .btn-fantome:hover { border-color: var(--text-muted); color: var(--text-primary); }
         .btn-danger {
             background: linear-gradient(135deg, var(--neon-red), #cc1030);
             color: #fff;
-            box-shadow: 0 4px 20px rgba(255, 51, 85, 0.3);
+            box-shadow: 0 4px 20px rgba(255,45,75,0.3);
         }
-        .btn-gold {
+        .btn-or {
             background: linear-gradient(135deg, var(--neon-gold), #e69900);
             color: #000;
-            box-shadow: 0 4px 20px rgba(255, 184, 0, 0.35);
+            box-shadow: 0 4px 20px rgba(255,184,0,0.35);
             font-weight: 800;
         }
-        .btn-sm {
-            padding: 8px 16px;
-            font-size: 12px;
-            border-radius: var(--radius-sm);
-        }
-        .btn-lg {
-            padding: 15px 32px;
-            font-size: 16px;
-            border-radius: var(--radius-lg);
-        }
-        .btn-block {
-            width: 100%;
-            justify-content: center;
-        }
-        .btn:disabled {
-            opacity: 0.4;
-            pointer-events: none;
-        }
+        .btn-sm { padding: 8px 16px; font-size: 12px; border-radius: var(--radius-sm); }
+        .btn-lg { padding: 15px 32px; font-size: 16px; border-radius: var(--radius-lg); }
+        .btn-block { width: 100%; justify-content: center; }
+        .btn:disabled { opacity: 0.4; pointer-events: none; }
 
         /* ── LOBBY ── */
         .lobby-header {
@@ -367,7 +289,7 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        .lobby-stats-row {
+        .lobby-stats {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
@@ -384,9 +306,8 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            white-space: nowrap;
         }
-        .stat-pill .live-dot {
+        .live-dot {
             width: 8px;
             height: 8px;
             border-radius: 50%;
@@ -394,21 +315,16 @@
             animation: live-pulse 1.5s infinite;
         }
         @keyframes live-pulse {
-            0%,
-            100% {
-                box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.6);
-            }
-            50% {
-                box-shadow: 0 0 0 10px rgba(0, 230, 118, 0);
-            }
+            0%,100% { box-shadow: 0 0 0 0 rgba(0,230,118,0.6); }
+            50% { box-shadow: 0 0 0 10px rgba(0,230,118,0); }
         }
-        .category-grid {
+        .categorie-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin-bottom: 14px;
         }
-        .category-card {
+        .categorie-card {
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-md);
@@ -417,31 +333,17 @@
             transition: all var(--transition-smooth);
             text-align: center;
             position: relative;
-            overflow: hidden;
         }
-        .category-card:hover {
+        .categorie-card:hover {
             border-color: var(--neon-blue);
-            box-shadow: 0 0 20px rgba(0, 212, 255, 0.1);
+            box-shadow: 0 0 20px rgba(0,212,255,0.1);
             transform: translateY(-2px);
         }
-        .category-card:active {
-            transform: scale(0.96);
-        }
-        .category-card .cat-icon {
-            font-size: 36px;
-            margin-bottom: 6px;
-        }
-        .category-card .cat-name {
-            font-weight: 700;
-            font-size: 13px;
-            color: var(--text-primary);
-            margin-bottom: 2px;
-        }
-        .category-card .cat-players {
-            font-size: 10px;
-            color: var(--text-muted);
-        }
-        .category-card .cat-badge {
+        .categorie-card:active { transform: scale(0.96); }
+        .cat-icone { font-size: 36px; margin-bottom: 6px; }
+        .cat-nom { font-weight: 700; font-size: 13px; color: var(--text-primary); margin-bottom: 2px; }
+        .cat-joueurs { font-size: 10px; color: var(--text-muted); }
+        .cat-badge {
             position: absolute;
             top: 8px;
             right: 8px;
@@ -452,13 +354,13 @@
             border-radius: 10px;
             font-weight: 700;
         }
-        .nav-tabs {
+        .nav-onglets {
             display: flex;
             gap: 6px;
             margin-bottom: 14px;
             flex-wrap: wrap;
         }
-        .nav-tab {
+        .nav-onglet {
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 12px;
@@ -468,17 +370,16 @@
             border: 1px solid var(--border-subtle);
             color: var(--text-secondary);
             transition: all var(--transition-fast);
-            white-space: nowrap;
         }
-        .nav-tab.active {
+        .nav-onglet.actif {
             background: var(--neon-blue);
             color: #000;
             border-color: var(--neon-blue);
             font-weight: 700;
         }
 
-        /* ── MATCH SCREEN ── */
-        .match-timer-bar {
+        /* ── MATCH ── */
+        .match-chrono {
             width: 100%;
             height: 6px;
             background: var(--border-subtle);
@@ -486,26 +387,21 @@
             overflow: hidden;
             margin-bottom: 12px;
         }
-        .match-timer-fill {
+        .match-chrono-remplissage {
             height: 100%;
             background: var(--neon-blue);
             border-radius: 6px;
             transition: width 0.1s linear;
         }
-        .match-timer-fill.urgent {
+        .match-chrono-remplissage.urgent {
             background: var(--neon-red);
             animation: urgent-flash 0.5s infinite;
         }
-        @keyframes urgent-flash {
-            50% {
-                opacity: 0.5;
-            }
-        }
-        .match-question-num {
+        @keyframes urgent-flash { 50% { opacity: 0.5; } }
+        .match-num-question {
             font-size: 11px;
             color: var(--text-muted);
             font-weight: 600;
-            letter-spacing: 1px;
             text-transform: uppercase;
             margin-bottom: 4px;
         }
@@ -540,54 +436,33 @@
             justify-content: center;
             word-break: break-word;
         }
-        .match-option:hover {
-            border-color: var(--neon-blue);
-            background: var(--bg-card-hover);
-        }
-        .match-option.selected {
-            border-color: var(--neon-blue);
-            background: rgba(0, 212, 255, 0.12);
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.2);
-        }
+        .match-option:hover { border-color: var(--neon-blue); background: var(--bg-card-hover); }
         .match-option.correct {
             border-color: var(--neon-green) !important;
-            background: rgba(0, 230, 118, 0.15) !important;
+            background: rgba(0,230,118,0.15) !important;
             animation: correct-flash 0.5s ease;
         }
-        .match-option.wrong {
+        .match-option.incorrect {
             border-color: var(--neon-red) !important;
-            background: rgba(255, 51, 85, 0.15) !important;
+            background: rgba(255,45,75,0.15) !important;
             animation: shake 0.4s ease;
         }
         @keyframes correct-flash {
-            0%,
-            100% {
-                transform: scale(1);
-            }
-            50% {
-                transform: scale(1.04);
-            }
+            0%,100% { transform: scale(1); }
+            50% { transform: scale(1.04); }
         }
         @keyframes shake {
-            0%,
-            100% {
-                transform: translateX(0);
-            }
-            25% {
-                transform: translateX(-6px);
-            }
-            75% {
-                transform: translateX(6px);
-            }
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
         }
-        .match-live-scores {
+        .match-scores-live {
             display: flex;
             gap: 8px;
             flex-wrap: wrap;
-            margin-bottom: 8px;
             justify-content: center;
         }
-        .live-score-chip {
+        .score-live-puce {
             background: var(--bg-card);
             border-radius: 16px;
             padding: 6px 12px;
@@ -598,16 +473,13 @@
             gap: 5px;
             border: 1px solid var(--border-subtle);
         }
-        .live-score-chip.me {
+        .score-live-puce.moi {
             border-color: var(--neon-gold);
-            box-shadow: 0 0 8px rgba(255, 184, 0, 0.2);
-        }
-        .live-score-chip .crown {
-            color: var(--neon-gold);
+            box-shadow: 0 0 8px rgba(255,184,0,0.2);
         }
 
-        /* ── RESULTS ── */
-        .results-card {
+        /* ── RÉSULTATS ── */
+        .carte-resultats {
             background: var(--bg-card);
             border-radius: var(--radius-lg);
             padding: 20px;
@@ -615,7 +487,7 @@
             border: 1px solid var(--border-subtle);
             margin-bottom: 12px;
         }
-        .results-rank {
+        .rang-resultat {
             font-size: 56px;
             font-weight: 900;
             background: linear-gradient(135deg, var(--neon-gold), #ffaa00);
@@ -623,25 +495,21 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        .results-xp {
+        .xp-gagne {
             font-size: 18px;
             font-weight: 700;
             color: var(--neon-green);
             margin: 8px 0;
         }
-        .results-rank-change {
+        .changement-rang {
             font-weight: 700;
             font-size: 14px;
         }
-        .results-rank-change.up {
-            color: var(--neon-green);
-        }
-        .results-rank-change.down {
-            color: var(--neon-red);
-        }
+        .changement-rang.hausse { color: var(--neon-green); }
+        .changement-rang.baisse { color: var(--neon-red); }
 
-        /* ── LEADERBOARD ── */
-        .lb-row {
+        /* ── CLASSEMENT ── */
+        .ligne-classement {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -650,28 +518,16 @@
             border-radius: var(--radius-sm);
             margin-bottom: 6px;
             border: 1px solid var(--border-subtle);
-            transition: all var(--transition-fast);
         }
-        .lb-row.top-1 {
+        .ligne-classement.top1 {
             border-color: var(--neon-gold);
-            box-shadow: 0 0 12px rgba(255, 184, 0, 0.2);
+            box-shadow: 0 0 12px rgba(255,184,0,0.2);
             background: linear-gradient(135deg, #1a1a10, var(--bg-card));
         }
-        .lb-row.top-2 {
-            border-color: #c0c0c0;
-            box-shadow: 0 0 8px rgba(192, 192, 192, 0.15);
-        }
-        .lb-row.top-3 {
-            border-color: #cd7f32;
-            box-shadow: 0 0 8px rgba(205, 127, 50, 0.15);
-        }
-        .lb-rank-num {
-            font-weight: 900;
-            font-size: 18px;
-            min-width: 30px;
-            text-align: center;
-        }
-        .lb-avatar {
+        .ligne-classement.top2 { border-color: #c0c0c0; }
+        .ligne-classement.top3 { border-color: #cd7f32; }
+        .rang-numero { font-weight: 900; font-size: 18px; min-width: 30px; text-align: center; }
+        .avatar-lb {
             width: 36px;
             height: 36px;
             border-radius: 50%;
@@ -682,29 +538,13 @@
             font-size: 16px;
             font-weight: 700;
         }
-        .lb-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .lb-name {
-            font-weight: 700;
-            font-size: 13px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .lb-stats {
-            font-size: 10px;
-            color: var(--text-muted);
-        }
-        .lb-score {
-            font-weight: 800;
-            font-size: 14px;
-            color: var(--neon-gold);
-        }
+        .info-lb { flex: 1; min-width: 0; }
+        .nom-lb { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .stats-lb { font-size: 10px; color: var(--text-muted); }
+        .score-lb { font-weight: 800; font-size: 14px; color: var(--neon-gold); }
 
-        /* ── PROFILE ── */
-        .profile-avatar-large {
+        /* ── PROFIL ── */
+        .profil-avatar-grand {
             width: 80px;
             height: 80px;
             border-radius: 50%;
@@ -715,39 +555,25 @@
             justify-content: center;
             font-size: 40px;
             border: 3px solid var(--neon-blue);
-            box-shadow: 0 0 25px rgba(0, 212, 255, 0.2);
+            box-shadow: 0 0 25px rgba(0,212,255,0.2);
         }
-        .profile-stat-grid {
+        .profil-stat-grille {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
             margin: 12px 0;
         }
-        .profile-stat-box {
+        .profil-stat-case {
             background: var(--bg-card);
             border-radius: var(--radius-sm);
             padding: 14px;
             text-align: center;
             border: 1px solid var(--border-subtle);
         }
-        .profile-stat-val {
-            font-size: 22px;
-            font-weight: 900;
-            color: var(--neon-blue);
-        }
-        .profile-stat-label {
-            font-size: 10px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        .badge-row {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 8px;
-        }
-        .badge-chip {
+        .profil-stat-val { font-size: 22px; font-weight: 900; color: var(--neon-blue); }
+        .profil-stat-etiq { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        .badge-rangee { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+        .badge-puce {
             padding: 6px 12px;
             border-radius: 16px;
             font-size: 11px;
@@ -756,30 +582,18 @@
             align-items: center;
             gap: 5px;
         }
-        .badge-recruiter {
-            background: #ff6b2b22;
-            color: #ff6b2b;
-            border: 1px solid #ff6b2b44;
-        }
-        .badge-growth {
-            background: #c0c0c022;
-            color: #c0c0c0;
-            border: 1px solid #c0c0c044;
-        }
-        .badge-legend {
-            background: #ffb80022;
-            color: var(--neon-gold);
-            border: 1px solid #ffb80044;
-        }
+        .badge-recruteur { background: #ff6b2b22; color: #ff6b2b; border: 1px solid #ff6b2b44; }
+        .badge-croissance { background: #c0c0c022; color: #c0c0c0; border: 1px solid #c0c0c044; }
+        .badge-legende { background: #ffb80022; color: var(--neon-gold); border: 1px solid #ffb80044; }
 
-        /* ── REFERRAL ── */
+        /* ── PARRAINAGE ── */
         .ref-code-box {
             background: var(--bg-card);
             border: 2px dashed var(--neon-blue);
             border-radius: var(--radius-md);
             padding: 14px;
             text-align: center;
-            font-family: var(--font-mono);
+            font-family: 'Courier New', monospace;
             font-size: 18px;
             font-weight: 800;
             letter-spacing: 2px;
@@ -787,13 +601,8 @@
             margin: 10px 0;
             word-break: break-all;
         }
-        .ref-link-row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin: 8px 0;
-        }
-        .ref-link-input {
+        .ref-lien-rangee { display: flex; gap: 8px; align-items: center; margin: 8px 0; }
+        .ref-lien-input {
             flex: 1;
             background: var(--bg-card);
             border: 1px solid var(--border-subtle);
@@ -801,14 +610,14 @@
             padding: 10px 12px;
             color: var(--text-primary);
             font-size: 11px;
-            font-family: var(--font-mono);
+            font-family: monospace;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
         }
 
-        /* ── REWARDS ── */
-        .reward-card {
+        /* ── RÉCOMPENSES ── */
+        .recompense-card {
             background: var(--bg-card);
             border-radius: var(--radius-md);
             padding: 16px;
@@ -818,34 +627,13 @@
             align-items: center;
             gap: 12px;
         }
-        .reward-icon {
-            font-size: 40px;
-        }
-        .reward-info {
-            flex: 1;
-        }
-        .reward-name {
-            font-weight: 700;
-            font-size: 14px;
-        }
-        .reward-desc {
-            font-size: 11px;
-            color: var(--text-muted);
-        }
-        .reward-status {
-            font-size: 10px;
-            padding: 4px 10px;
-            border-radius: 10px;
-            font-weight: 700;
-        }
-        .reward-status.available {
-            background: #00e67622;
-            color: var(--neon-green);
-        }
-        .reward-status.locked {
-            background: #ff335522;
-            color: var(--neon-red);
-        }
+        .recompense-icone { font-size: 40px; }
+        .recompense-info { flex: 1; }
+        .recompense-nom { font-weight: 700; font-size: 14px; }
+        .recompense-desc { font-size: 11px; color: var(--text-muted); }
+        .recompense-statut { font-size: 10px; padding: 4px 10px; border-radius: 10px; font-weight: 700; }
+        .recompense-statut.dispo { background: #00e67622; color: var(--neon-green); }
+        .recompense-statut.verrou { background: #ff2d4b22; color: var(--neon-red); }
 
         /* ── MATCHMAKING ── */
         .matchmaking-anim {
@@ -863,24 +651,12 @@
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
         }
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
-        .mm-text {
-            font-weight: 700;
-            color: var(--text-secondary);
-            text-align: center;
-        }
-        .mm-count {
-            font-size: 36px;
-            font-weight: 900;
-            color: var(--neon-blue);
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .mm-texte { font-weight: 700; color: var(--text-secondary); text-align: center; }
+        .mm-compte { font-size: 36px; font-weight: 900; color: var(--neon-blue); }
 
         /* ── TOAST ── */
-        .toast-container {
+        .toast-conteneur {
             position: fixed;
             top: 20px;
             left: 50%;
@@ -901,222 +677,175 @@
             text-align: center;
             pointer-events: auto;
         }
-        .toast-success {
-            background: #00e676;
-            color: #000;
-        }
-        .toast-error {
-            background: var(--neon-red);
-            color: #fff;
-        }
-        .toast-info {
-            background: var(--neon-blue);
-            color: #000;
-        }
+        .toast-succes { background: #00e676; color: #000; }
+        .toast-erreur { background: var(--neon-red); color: #fff; }
+        .toast-info { background: var(--neon-blue); color: #000; }
         @keyframes toast-in {
-            from {
-                transform: translateY(-30px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
+            from { transform: translateY(-30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
         }
         @keyframes toast-out {
-            from {
-                opacity: 1;
-            }
-            to {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-        }
-
-        /* ── SCROLLBAR ── */
-        .screen::-webkit-scrollbar {
-            width: 3px;
-        }
-        .screen::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .screen::-webkit-scrollbar-thumb {
-            background: var(--border-subtle);
-            border-radius: 3px;
+            from { opacity: 1; }
+            to { opacity: 0; transform: translateY(-20px); }
         }
 
         /* ── RESPONSIVE ── */
         @media (max-width: 380px) {
-            .category-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 6px;
-            }
-            .category-card {
-                padding: 10px 6px;
-            }
-            .category-card .cat-icon {
-                font-size: 26px;
-            }
-            .match-options {
-                grid-template-columns: 1fr;
-            }
-            .btn {
-                padding: 10px 16px;
-                font-size: 12px;
-            }
-            .lobby-logo {
-                font-size: 20px;
-            }
+            .categorie-grid { gap: 6px; }
+            .categorie-card { padding: 10px 6px; }
+            .cat-icone { font-size: 26px; }
+            .match-options { grid-template-columns: 1fr; }
+            .btn { padding: 10px 16px; font-size: 12px; }
+            .lobby-logo { font-size: 20px; }
         }
     </style>
 </head>
 <body>
-
     <div id="app-root">
-        <!-- LOADING SCREEN -->
-        <div id="loading-screen" class="screen active">
+        <!-- ÉCRAN DE CHARGEMENT -->
+        <div id="ecran-chargement" class="screen active">
             <div class="logo-pulse">AYITOPIA</div>
             <div class="loader-bar"><div class="loader-bar-fill"></div></div>
-            <div style="color:var(--text-muted);font-size:12px;">Loading your arena...</div>
+            <div style="color:var(--text-muted);font-size:12px;">Chargement de l'arène…</div>
         </div>
 
-        <!-- TUTORIAL OVERLAY -->
-        <div id="tutorial-overlay" class="hidden"></div>
+        <!-- TUTORIEL (superposition) -->
+        <div id="tutoriel-overlay" class="hidden"></div>
 
-        <!-- LOBBY SCREEN -->
-        <div id="lobby-screen" class="screen hidden">
+        <!-- LOBBY -->
+        <div id="ecran-lobby" class="screen">
             <div class="lobby-header">
                 <div class="lobby-logo">⚔️ AYITOPIA</div>
-                <button class="btn btn-ghost btn-sm" onclick="showScreen('profile-screen')">👤 Profile</button>
+                <button class="btn btn-fantome btn-sm" onclick="afficherEcran('ecran-profil')">👤 Profil</button>
             </div>
-            <div class="lobby-stats-row" id="lobby-stats-row">
-                <div class="stat-pill"><span class="live-dot"></span> <span id="global-online">0</span> online</div>
-                <div class="stat-pill">🏆 <span id="user-rank-display">--</span></div>
-                <div class="stat-pill">⭐ <span id="user-score-display">0</span> pts</div>
+            <div class="lobby-stats" id="lobby-stats-row">
+                <div class="stat-pill"><span class="live-dot"></span> <span id="global-en-ligne">0</span> en ligne</div>
+                <div class="stat-pill">🏆 <span id="affichage-rang-utilisateur">--</span></div>
+                <div class="stat-pill">⭐ <span id="affichage-score-utilisateur">0</span> pts</div>
             </div>
-            <div class="nav-tabs" id="lobby-nav-tabs">
-                <div class="nav-tab active" data-tab="play">🎮 Play</div>
-                <div class="nav-tab" data-tab="leaderboard">🏆 Rankings</div>
-                <div class="nav-tab" data-tab="referrals">👥 Referrals</div>
-                <div class="nav-tab" data-tab="rewards">🎁 Rewards</div>
+            <div class="nav-onglets" id="lobby-nav-onglets">
+                <div class="nav-onglet actif" data-onglet="jouer">🎮 Jouer</div>
+                <div class="nav-onglet" data-onglet="classement">🏆 Classement</div>
+                <div class="nav-onglet" data-onglet="parrainage">👥 Parrainage</div>
+                <div class="nav-onglet" data-onglet="recompenses">🎁 Récompenses</div>
             </div>
-            <div id="lobby-tab-content"></div>
+            <div id="lobby-contenu-onglet"></div>
         </div>
 
-        <!-- CATEGORY SELECT SCREEN -->
-        <div id="category-screen" class="screen hidden">
+        <!-- SÉLECTION DE CATÉGORIE -->
+        <div id="ecran-categorie" class="screen">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                <button class="btn btn-ghost btn-sm" onclick="showScreen('lobby-screen')">← Back</button>
-                <span style="font-weight:700;font-size:16px;">Select Category</span>
+                <button class="btn btn-fantome btn-sm" onclick="afficherEcran('ecran-lobby')">← Retour</button>
+                <span style="font-weight:700;font-size:16px;">Choisir une catégorie</span>
             </div>
-            <div class="category-grid" id="category-grid"></div>
+            <div class="categorie-grid" id="categorie-grid"></div>
         </div>
 
-        <!-- MATCHMAKING SCREEN -->
-        <div id="matchmaking-screen" class="screen hidden">
+        <!-- MATCHMAKING -->
+        <div id="ecran-matchmaking" class="screen">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                <button class="btn btn-ghost btn-sm" id="mm-cancel-btn">← Cancel</button>
-                <span style="font-weight:700;font-size:16px;">Matchmaking</span>
+                <button class="btn btn-fantome btn-sm" id="mm-annuler-btn">← Annuler</button>
+                <span style="font-weight:700;font-size:16px;">Recherche de match</span>
             </div>
             <div class="matchmaking-anim">
                 <div class="mm-spinner"></div>
-                <div class="mm-text">Searching for opponents...</div>
-                <div class="mm-count" id="mm-queue-count">0</div>
-                <div style="color:var(--text-muted);font-size:12px;">players in queue</div>
-                <div style="color:var(--text-muted);font-size:11px;" id="mm-category-name"></div>
+                <div class="mm-texte">Recherche d'adversaires…</div>
+                <div class="mm-compte" id="mm-file-compte">0</div>
+                <div style="color:var(--text-muted);font-size:12px;">joueurs en attente</div>
+                <div style="color:var(--text-muted);font-size:11px;" id="mm-nom-categorie"></div>
             </div>
         </div>
 
-        <!-- MATCH SCREEN -->
-        <div id="match-screen" class="screen hidden">
-            <div class="match-timer-bar"><div class="match-timer-fill" id="match-timer-fill"></div></div>
-            <div class="match-question-num" id="match-q-num">Question 1 / 10</div>
+        <!-- MATCH -->
+        <div id="ecran-match" class="screen">
+            <div class="match-chrono"><div class="match-chrono-remplissage" id="match-chrono-remplissage"></div></div>
+            <div class="match-num-question" id="match-num-question">Question 1 / 10</div>
             <div class="match-question" id="match-question"></div>
             <div class="match-options" id="match-options"></div>
-            <div class="match-live-scores" id="match-live-scores"></div>
+            <div class="match-scores-live" id="match-scores-live"></div>
         </div>
 
-        <!-- RESULTS SCREEN -->
-        <div id="results-screen" class="screen hidden">
-            <div class="results-card" id="results-content"></div>
-            <button class="btn btn-primary btn-block btn-lg" onclick="showScreen('lobby-screen')">🏠 Back to Lobby</button>
-            <button class="btn btn-secondary btn-block" style="margin-top:8px;" onclick="restartMatchmaking()">🔄 Play Again</button>
+        <!-- RÉSULTATS -->
+        <div id="ecran-resultats" class="screen">
+            <div class="carte-resultats" id="contenu-resultats"></div>
+            <button class="btn btn-primaire btn-block btn-lg" onclick="afficherEcran('ecran-lobby')">🏠 Retour au lobby</button>
+            <button class="btn btn-secondaire btn-block" style="margin-top:8px;" onclick="relancerMatchmaking()">🔄 Rejouer</button>
         </div>
 
-        <!-- LEADERBOARD SCREEN (embedded in lobby tab or standalone) -->
-        <div id="leaderboard-screen" class="screen hidden">
+        <!-- CLASSEMENT -->
+        <div id="ecran-classement" class="screen">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                <button class="btn btn-ghost btn-sm" onclick="showScreen('lobby-screen')">← Back</button>
-                <span style="font-weight:700;font-size:16px;">🏆 Leaderboard</span>
+                <button class="btn btn-fantome btn-sm" onclick="afficherEcran('ecran-lobby')">← Retour</button>
+                <span style="font-weight:700;font-size:16px;">🏆 Classement</span>
             </div>
-            <div class="nav-tabs" id="lb-tabs">
-                <div class="nav-tab active" data-lb="global">🌍 Global</div>
-                <div class="nav-tab" data-lb="daily">📅 Daily</div>
-                <div class="nav-tab" data-lb="weekly">📊 Weekly</div>
-                <div class="nav-tab" data-lb="referral">👥 Top Inviters</div>
+            <div class="nav-onglets" id="classement-onglets">
+                <div class="nav-onglet actif" data-classement="global">🌍 Global</div>
+                <div class="nav-onglet" data-classement="quotidien">📅 Quotidien</div>
+                <div class="nav-onglet" data-classement="hebdo">📊 Hebdomadaire</div>
+                <div class="nav-onglet" data-classement="parrains">👥 Top Parrains</div>
             </div>
-            <div id="lb-content"></div>
+            <div id="contenu-classement"></div>
         </div>
 
-        <!-- PROFILE SCREEN -->
-        <div id="profile-screen" class="screen hidden">
+        <!-- PROFIL -->
+        <div id="ecran-profil" class="screen">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                <button class="btn btn-ghost btn-sm" onclick="showScreen('lobby-screen')">← Back</button>
-                <span style="font-weight:700;font-size:16px;">👤 My Profile</span>
+                <button class="btn btn-fantome btn-sm" onclick="afficherEcran('ecran-lobby')">← Retour</button>
+                <span style="font-weight:700;font-size:16px;">👤 Mon Profil</span>
             </div>
-            <div class="profile-avatar-large" id="profile-avatar">👤</div>
-            <div style="text-align:center;font-weight:800;font-size:18px;" id="profile-username">Player</div>
-            <div style="text-align:center;color:var(--text-muted);font-size:11px;" id="profile-refcode">Code: ---</div>
-            <div class="profile-stat-grid">
-                <div class="profile-stat-box"><div class="profile-stat-val" id="prof-wins">0</div><div class="profile-stat-label">Wins</div></div>
-                <div class="profile-stat-box"><div class="profile-stat-val" id="prof-score">0</div><div class="profile-stat-label">Total Score</div></div>
-                <div class="profile-stat-box"><div class="profile-stat-val" id="prof-accuracy">0%</div><div class="profile-stat-label">Accuracy</div></div>
-                <div class="profile-stat-box"><div class="profile-stat-val" id="prof-rank">--</div><div class="profile-stat-label">Global Rank</div></div>
+            <div class="profil-avatar-grand" id="profil-avatar">👤</div>
+            <div style="text-align:center;font-weight:800;font-size:18px;" id="profil-pseudo">Joueur</div>
+            <div style="text-align:center;color:var(--text-muted);font-size:11px;" id="profil-code-ref">Code : ---</div>
+            <div class="profil-stat-grille">
+                <div class="profil-stat-case"><div class="profil-stat-val" id="prof-victoires">0</div><div class="profil-stat-etiq">Victoires</div></div>
+                <div class="profil-stat-case"><div class="profil-stat-val" id="prof-score">0</div><div class="profil-stat-etiq">Score total</div></div>
+                <div class="profil-stat-case"><div class="profil-stat-val" id="prof-precision">0%</div><div class="profil-stat-etiq">Précision</div></div>
+                <div class="profil-stat-case"><div class="profil-stat-val" id="prof-rang">--</div><div class="profil-stat-etiq">Rang global</div></div>
             </div>
             <div style="font-weight:700;font-size:13px;margin-top:8px;">🏅 Badges</div>
-            <div class="badge-row" id="profile-badges"></div>
-            <button class="btn btn-danger btn-block btn-sm" style="margin-top:16px;" onclick="handleLogout()">🚪 Logout</button>
+            <div class="badge-rangee" id="profil-badges"></div>
+            <button class="btn btn-danger btn-block btn-sm" style="margin-top:16px;" onclick="deconnexion()">🚪 Déconnexion</button>
         </div>
 
-        <!-- REFERRAL SCREEN -->
-        <div id="referral-screen" class="screen hidden">
+        <!-- PARRAINAGE -->
+        <div id="ecran-parrainage" class="screen">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                <button class="btn btn-ghost btn-sm" onclick="showScreen('lobby-screen')">← Back</button>
-                <span style="font-weight:700;font-size:16px;">👥 Referrals</span>
+                <button class="btn btn-fantome btn-sm" onclick="afficherEcran('ecran-lobby')">← Retour</button>
+                <span style="font-weight:700;font-size:16px;">👥 Parrainage</span>
             </div>
-            <div style="text-align:center;font-weight:700;color:var(--neon-gold);margin-bottom:6px;">Invite friends & earn points!</div>
-            <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:10px;">+10 pts per referral • +1 pt per WhatsApp share (max 5/day)</div>
+            <div style="text-align:center;font-weight:700;color:var(--neon-gold);margin-bottom:6px;">Invitez vos amis et gagnez des points !</div>
+            <div style="text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:10px;">+10 pts par filleul • +1 pt par partage WhatsApp (max 5/jour)</div>
             <div class="ref-code-box" id="ref-code-box">----</div>
-            <div class="ref-link-row">
-                <input class="ref-link-input" id="ref-link-input" readonly value="" />
-                <button class="btn btn-primary btn-sm" onclick="copyRefLink()">📋 Copy</button>
+            <div class="ref-lien-rangee">
+                <input class="ref-lien-input" id="ref-lien-input" readonly value="" />
+                <button class="btn btn-primaire btn-sm" onclick="copierLienParrainage()">📋 Copier</button>
             </div>
-            <button class="btn btn-gold btn-block" style="margin-top:8px;" onclick="shareWhatsApp()">📲 Share on WhatsApp</button>
-            <div style="margin-top:12px;font-weight:700;font-size:13px;">📊 Your Referral Stats</div>
-            <div style="color:var(--text-secondary);font-size:13px;" id="ref-stats">Total invites: 0 | Points earned: 0</div>
+            <button class="btn btn-or btn-block" style="margin-top:8px;" onclick="partagerWhatsApp()">📲 Partager sur WhatsApp</button>
+            <div style="margin-top:12px;font-weight:700;font-size:13px;">📊 Statistiques de parrainage</div>
+            <div style="color:var(--text-secondary);font-size:13px;" id="ref-stats">Invitations : 0 | Points gagnés : 0</div>
         </div>
 
-        <!-- REWARDS SCREEN -->
-        <div id="rewards-screen" class="screen hidden">
+        <!-- RÉCOMPENSES -->
+        <div id="ecran-recompenses" class="screen">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">
-                <button class="btn btn-ghost btn-sm" onclick="showScreen('lobby-screen')">← Back</button>
-                <span style="font-weight:700;font-size:16px;">🎁 Rewards</span>
+                <button class="btn btn-fantome btn-sm" onclick="afficherEcran('ecran-lobby')">← Retour</button>
+                <span style="font-weight:700;font-size:16px;">🎁 Récompenses</span>
             </div>
-            <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Weekly top performers qualify for real rewards</div>
-            <div id="rewards-list"></div>
-            <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:10px;">⚠️ Only top leaderboard players qualify. Limited rewards to prevent abuse.</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-bottom:10px;">Les meilleurs joueurs hebdomadaires peuvent gagner des récompenses réelles</div>
+            <div id="liste-recompenses"></div>
+            <div style="font-size:10px;color:var(--text-muted);text-align:center;margin-top:10px;">⚠️ Seuls les meilleurs classements hebdomadaires sont éligibles. Récompenses limitées pour éviter les abus.</div>
         </div>
     </div>
 
-    <!-- TOAST CONTAINER -->
-    <div class="toast-container" id="toast-container"></div>
+    <!-- CONTENEUR DE TOAST -->
+    <div class="toast-conteneur" id="toast-conteneur"></div>
 
     <script>
-  // ═══════════════════════════════════════════════════════════════
-        //  AYITOPIA - Complete Multiplayer Quiz Platform
-        //  FIREBASE CONFIGURATION - REPLACE WITH YOUR OWN CREDENTIALS
         // ═══════════════════════════════════════════════════════════════
-        const FIREBASE_CONFIG = {
+        //  AYITOPIA – Plateforme de quiz compétitive haïtienne
+        //  CONFIGURATION FIREBASE (remplacez par vos identifiants)
+        // ═══════════════════════════════════════════════════════════════
+        const CONFIG_FIREBASE = {
             apiKey: "AIzaSyD-PLACEHOLDER-KEY-REPLACE-ME",
             authDomain: "ayitopia-app.firebaseapp.com",
             projectId: "ayitopia-app",
@@ -1125,1241 +854,1006 @@
             appId: "1:000000000000:web:xxxxxxxxxxxxxxxxxxxx"
         };
 
-        // Demo mode flag - set to true for offline UI testing without Firebase
-        const DEMO_MODE = true;
-        let firebaseReady = false;
+        const MODE_DEMO = true;   // passer à false quand Firebase est configuré
+        let firebasePret = false;
         let auth = null;
         let db = null;
-        let currentUser = null;
-        let currentUserData = null;
+        let utilisateurActuel = null;
+        let donneesUtilisateur = null;
 
         // ═══════════════════════════════════════════════════════════════
-        //  APP STATE
+        //  ÉTAT DE L'APPLICATION
         // ═══════════════════════════════════════════════════════════════
-        const APP_STATE = {
-            currentScreen: 'loading-screen',
-            previousScreen: null,
-            tutorialStep: 0,
-            totalTutorialSteps: 8,
-            tutorialSeen: false,
-            selectedCategory: null,
-            selectedCategoryName: null,
-            matchId: null,
-            matchData: null,
-            matchPlayerIndex: -1,
-            currentQuestionIndex: 0,
-            questionStartTime: 0,
-            questionTimeLimit: 20,
-            answersSubmitted: [],
-            matchScores: {},
-            matchFinished: false,
-            queueUnsubscribe: null,
-            matchUnsubscribe: null,
-            lobbyTab: 'play',
-            leaderboardTab: 'global',
-            pendingReferral: null,
-            dailyWhatsAppShares: 0,
-            lastWhatsAppShareDate: null,
+        const ETAT_APP = {
+            ecranActif: 'ecran-chargement',
+            etapeTutoriel: 0,
+            totalEtapesTutoriel: 8,
+            tutorielVu: false,
+            categorieChoisie: null,
+            nomCategorieChoisie: null,
+            idMatch: null,
+            donneesMatch: null,
+            indexJoueurMatch: -1,
+            indexQuestionActuelle: 0,
+            debutQuestion: 0,
+            limiteTempsQuestion: 20,
+            reponsesSoumises: [],
+            scoresMatch: {},
+            matchTermine: false,
+            ongletLobby: 'jouer',
+            ongletClassement: 'global',
+            parrainageEnAttente: null,
+            partagesWhatsAppQuotidiens: 0,
+            derniereDatePartage: null,
+            _timerInterval: null,
         };
 
         // ═══════════════════════════════════════════════════════════════
-        //  QUESTION BANK
+        //  BANQUE DE QUESTIONS (interface en anglais/créole, texte français pour l'app)
         // ═══════════════════════════════════════════════════════════════
-        const QUESTION_BANK = {
-            'english-creole': [
-                { q: 'Translate: "Good morning" to Haitian Creole', opts: ['Bonjou', 'Bonswa', 'Bon apremidi',
-                        'Bon vwayaj'
-                    ], correct: 0, difficulty: 1 },
-                { q: 'Translate: "How are you?" to Haitian Creole', opts: ['Kijan ou ye?', 'Kisa ou vle?', 'Kote ou ale?',
-                        'Kilè ou vini?'
-                    ], correct: 0, difficulty: 1 },
-                { q: 'Translate: "I need help" to Haitian Creole', opts: ['Mwen bezwen èd', 'Mwen vle manje',
-                        'Mwen renmen ou', 'Mwen fatige'
-                    ], correct: 0, difficulty: 2 },
-                { q: 'What does "dlo" mean in English?', opts: ['Water', 'Fire', 'Earth', 'Wind'], correct: 0,
-                    difficulty: 1 },
-                { q: 'Translate: "Thank you very much"', opts: ['Mèsi anpil', 'Bonjou zanmi', 'Orevwa tout moun',
-                        'Souple ede mwen'
-                    ], correct: 0, difficulty: 1 },
-                { q: 'What does "zanmi" mean?', opts: ['Friend', 'Enemy', 'Family', 'Teacher'], correct: 0,
-                difficulty: 1 },
-                { q: 'Translate: "Where is the hospital?"', opts: ['Kote lopital la?', 'Kijan lopital la ye?',
-                        'Kilè lopital la ouvè?', 'Poukisa lopital la fèmen?'
-                    ], correct: 0, difficulty: 2 },
-                { q: 'What does "manje" mean?', opts: ['Food / To eat', 'To sleep', 'To run', 'To drink'], correct: 0,
-                    difficulty: 1 },
-                { q: 'Translate: "I love Haiti"', opts: ['Mwen renmen Ayiti', 'Mwen rayi Ayiti', 'Mwen kite Ayiti',
-                        'Mwen bliye Ayiti'
-                    ], correct: 0, difficulty: 2 },
-                { q: 'What does "koulè" mean?', opts: ['Color', 'School', 'Flower', 'Money'], correct: 0,
-                difficulty: 2 },
-                { q: 'Translate: "See you tomorrow"', opts: ['Na wè demen', 'Na wè jodi a', 'Na wè yè', 'Na wè kounye a'],
-                    correct: 0, difficulty: 2 },
-                { q: 'What does "chante" mean?', opts: ['To sing', 'To dance', 'To write', 'To read'], correct: 0,
-                    difficulty: 1 },
+        const BANQUE_QUESTIONS = {
+            'anglais-creole': [
+                { q: 'Traduisez : "Good morning" en créole haïtien', opts: ['Bonjou', 'Bonswa', 'Bon apremidi', 'Bon vwayaj'], correct: 0, difficulte: 1 },
+                { q: 'Traduisez : "How are you?" en créole haïtien', opts: ['Kijan ou ye?', 'Kisa ou vle?', 'Kote ou ale?', 'Kilè ou vini?'], correct: 0, difficulte: 1 },
+                { q: 'Traduisez : "I need help" en créole haïtien', opts: ['Mwen bezwen èd', 'Mwen vle manje', 'Mwen renmen ou', 'Mwen fatige'], correct: 0, difficulte: 2 },
+                { q: 'Que signifie "dlo" en français ?', opts: ['Eau', 'Feu', 'Terre', 'Vent'], correct: 0, difficulte: 1 },
+                { q: 'Traduisez : "Thank you very much"', opts: ['Mèsi anpil', 'Bonjou zanmi', 'Orevwa tout moun', 'Souple ede mwen'], correct: 0, difficulte: 1 },
+                { q: 'Que signifie "zanmi" ?', opts: ['Ami', 'Ennemi', 'Famille', 'Professeur'], correct: 0, difficulte: 1 },
+                { q: 'Traduisez : "Where is the hospital?"', opts: ['Kote lopital la?', 'Kijan lopital la ye?', 'Kilè lopital la ouvè?', 'Poukisa lopital la fèmen?'], correct: 0, difficulte: 2 },
+                { q: 'Que signifie "manje" ?', opts: ['Nourriture / Manger', 'Dormir', 'Courir', 'Boire'], correct: 0, difficulte: 1 },
+                { q: 'Traduisez : "I love Haiti"', opts: ['Mwen renmen Ayiti', 'Mwen rayi Ayiti', 'Mwen kite Ayiti', 'Mwen bliye Ayiti'], correct: 0, difficulte: 2 },
+                { q: 'Que signifie "koulè" ?', opts: ['Couleur', 'École', 'Fleur', 'Argent'], correct: 0, difficulte: 2 },
+                { q: 'Traduisez : "See you tomorrow"', opts: ['Na wè demen', 'Na wè jodi a', 'Na wè yè', 'Na wè kounye a'], correct: 0, difficulte: 2 },
+                { q: 'Que signifie "chante" ?', opts: ['Chanter', 'Danser', 'Écrire', 'Lire'], correct: 0, difficulte: 1 },
             ],
-            'math': [
-                { q: 'Solve: 15 × 8 = ?', opts: ['120', '110', '130', '115'], correct: 0, difficulty: 1 },
-                { q: 'What is the square root of 144?', opts: ['12', '14', '10', '16'], correct: 0, difficulty: 1 },
-                { q: 'Solve: 3x + 7 = 22, x = ?', opts: ['5', '6', '4', '7'], correct: 0, difficulty: 2 },
-                { q: 'What is 25% of 400?', opts: ['100', '80', '120', '90'], correct: 0, difficulty: 1 },
-                { q: 'If a triangle has angles 60° and 80°, what is the third angle?', opts: ['40°', '50°', '30°',
-                        '60°'
-                    ], correct: 0, difficulty: 2 },
-                { q: 'Solve: (8 + 4) × 3 - 10 = ?', opts: ['26', '22', '30', '18'], correct: 0, difficulty: 2 },
-                { q: 'What is the value of π (pi) to 2 decimal places?', opts: ['3.14', '3.16', '3.12', '3.18'],
-                    correct: 0, difficulty: 1 },
-                { q: 'Solve: 2⁵ = ?', opts: ['32', '64', '16', '128'], correct: 0, difficulty: 2 },
-                { q: 'What is the area of a circle with radius 7? (π=3.14)', opts: ['153.86', '140.00', '160.50',
-                        '145.00'
-                    ], correct: 0, difficulty: 3 },
-                { q: 'Simplify: 3(2x + 4) - 2x', opts: ['4x + 12', '6x + 12', '4x + 8', '8x + 12'], correct: 0,
-                    difficulty: 3 },
+            'maths': [
+                { q: 'Résolvez : 15 × 8 = ?', opts: ['120', '110', '130', '115'], correct: 0, difficulte: 1 },
+                { q: 'Quelle est la racine carrée de 144 ?', opts: ['12', '14', '10', '16'], correct: 0, difficulte: 1 },
+                { q: 'Résolvez : 3x + 7 = 22, x = ?', opts: ['5', '6', '4', '7'], correct: 0, difficulte: 2 },
+                { q: 'Que vaut 25% de 400 ?', opts: ['100', '80', '120', '90'], correct: 0, difficulte: 1 },
+                { q: 'Si un triangle a des angles de 60° et 80°, quel est le troisième ?', opts: ['40°', '50°', '30°', '60°'], correct: 0, difficulte: 2 },
+                { q: 'Résolvez : (8 + 4) × 3 - 10 = ?', opts: ['26', '22', '30', '18'], correct: 0, difficulte: 2 },
+                { q: 'Quelle est la valeur de π (pi) à 2 décimales ?', opts: ['3,14', '3,16', '3,12', '3,18'], correct: 0, difficulte: 1 },
+                { q: 'Résolvez : 2⁵ = ?', opts: ['32', '64', '16', '128'], correct: 0, difficulte: 2 },
+                { q: 'Quelle est l\'aire d\'un cercle de rayon 7 ? (π=3,14)', opts: ['153,86', '140,00', '160,50', '145,00'], correct: 0, difficulte: 3 },
+                { q: 'Simplifiez : 3(2x + 4) - 2x', opts: ['4x + 12', '6x + 12', '4x + 8', '8x + 12'], correct: 0, difficulte: 3 },
             ],
-            'science': [
-                { q: 'What is the chemical symbol for water?', opts: ['H₂O', 'CO₂', 'NaCl', 'O₂'], correct: 0,
-                    difficulty: 1 },
-                { q: 'Which planet is known as the Red Planet?', opts: ['Mars', 'Venus', 'Jupiter', 'Saturn'],
-                    correct: 0, difficulty: 1 },
-                { q: 'What force keeps us on the ground?', opts: ['Gravity', 'Magnetism', 'Friction', 'Inertia'],
-                    correct: 0, difficulty: 1 },
-                { q: 'What is the speed of light in vacuum?', opts: ['300,000 km/s', '150,000 km/s', '500,000 km/s',
-                        '100,000 km/s'
-                    ], correct: 0, difficulty: 2 },
-                { q: 'Which gas do plants absorb from the atmosphere?', opts: ['Carbon dioxide', 'Oxygen', 'Nitrogen',
-                        'Hydrogen'
-                    ], correct: 0, difficulty: 1 },
-                { q: 'What is the boiling point of water in Celsius?', opts: ['100°C', '90°C', '110°C', '80°C'],
-                    correct: 0, difficulty: 1 },
-                { q: 'What type of energy does the sun produce?', opts: ['Nuclear fusion', 'Chemical', 'Electrical',
-                        'Mechanical'
-                    ], correct: 0, difficulty: 2 },
-                { q: 'Which element has the atomic number 1?', opts: ['Hydrogen', 'Helium', 'Lithium', 'Carbon'],
-                    correct: 0, difficulty: 2 },
+            'sciences': [
+                { q: 'Quel est le symbole chimique de l\'eau ?', opts: ['H₂O', 'CO₂', 'NaCl', 'O₂'], correct: 0, difficulte: 1 },
+                { q: 'Quelle planète est surnommée la planète rouge ?', opts: ['Mars', 'Vénus', 'Jupiter', 'Saturne'], correct: 0, difficulte: 1 },
+                { q: 'Quelle force nous maintient au sol ?', opts: ['Gravité', 'Magnétisme', 'Friction', 'Inertie'], correct: 0, difficulte: 1 },
+                { q: 'Quelle est la vitesse de la lumière dans le vide ?', opts: ['300 000 km/s', '150 000 km/s', '500 000 km/s', '100 000 km/s'], correct: 0, difficulte: 2 },
+                { q: 'Quel gaz les plantes absorbent-elles de l\'atmosphère ?', opts: ['Dioxyde de carbone', 'Oxygène', 'Azote', 'Hydrogène'], correct: 0, difficulte: 1 },
+                { q: 'Quel est le point d\'ébullition de l\'eau en Celsius ?', opts: ['100°C', '90°C', '110°C', '80°C'], correct: 0, difficulte: 1 },
+                { q: 'Quel type d\'énergie le soleil produit-il ?', opts: ['Fusion nucléaire', 'Chimique', 'Électrique', 'Mécanique'], correct: 0, difficulte: 2 },
+                { q: 'Quel élément a le numéro atomique 1 ?', opts: ['Hydrogène', 'Hélium', 'Lithium', 'Carbone'], correct: 0, difficulte: 2 },
             ],
-            'biology': [
-                { q: 'What is the powerhouse of the cell?', opts: ['Mitochondria', 'Nucleus', 'Ribosome', 'Golgi body'],
-                    correct: 0, difficulty: 1 },
-                { q: 'How many chromosomes do humans have?', opts: ['46', '44', '48', '42'], correct: 0, difficulty: 1 },
-                { q: 'Which blood type is the universal donor?', opts: ['O negative', 'A positive', 'B negative',
-                        'AB positive'
-                    ], correct: 0, difficulty: 2 },
-                { q: 'What is the largest organ in the human body?', opts: ['Skin', 'Liver', 'Brain', 'Heart'],
-                    correct: 0, difficulty: 1 },
-                { q: 'What process do plants use to make food?', opts: ['Photosynthesis', 'Respiration', 'Digestion',
-                        'Fermentation'
-                    ], correct: 0, difficulty: 1 },
-                { q: 'Which vitamin is produced when skin is exposed to sunlight?', opts: ['Vitamin D', 'Vitamin C',
-                        'Vitamin A', 'Vitamin B12'
-                    ], correct: 0, difficulty: 2 },
-                { q: 'What is the function of red blood cells?', opts: ['Carry oxygen', 'Fight infection', 'Clot blood',
-                        'Produce hormones'
-                    ], correct: 0, difficulty: 2 },
+            'biologie': [
+                { q: 'Quel est le rôle de la mitochondrie ?', opts: ['Centrale énergétique', 'Noyau', 'Ribosome', 'Appareil de Golgi'], correct: 0, difficulte: 1 },
+                { q: 'Combien de chromosomes les humains possèdent-ils ?', opts: ['46', '44', '48', '42'], correct: 0, difficulte: 1 },
+                { q: 'Quel groupe sanguin est donneur universel ?', opts: ['O négatif', 'A positif', 'B négatif', 'AB positif'], correct: 0, difficulte: 2 },
+                { q: 'Quel est le plus grand organe du corps humain ?', opts: ['Peau', 'Foie', 'Cerveau', 'Cœur'], correct: 0, difficulte: 1 },
+                { q: 'Quel processus les plantes utilisent-elles pour se nourrir ?', opts: ['Photosynthèse', 'Respiration', 'Digestion', 'Fermentation'], correct: 0, difficulte: 1 },
+                { q: 'Quelle vitamine est produite par exposition au soleil ?', opts: ['Vitamine D', 'Vitamine C', 'Vitamine A', 'Vitamine B12'], correct: 0, difficulte: 2 },
+                { q: 'Quelle est la fonction des globules rouges ?', opts: ['Transporter l\'oxygène', 'Combattre les infections', 'Coaguler le sang', 'Produire des hormones'], correct: 0, difficulte: 2 },
             ],
-            'chemistry': [
-                { q: 'What is the chemical symbol for gold?', opts: ['Au', 'Ag', 'Fe', 'Cu'], correct: 0, difficulty: 1 },
-                { q: 'What is the pH of pure water?', opts: ['7', '0', '14', '5'], correct: 0, difficulty: 1 },
-                { q: 'Which gas is most abundant in Earth\'s atmosphere?', opts: ['Nitrogen', 'Oxygen', 'Carbon dioxide',
-                        'Argon'
-                    ], correct: 0, difficulty: 2 },
-                { q: 'What is the chemical formula for table salt?', opts: ['NaCl', 'KCl', 'CaCl₂', 'MgCl₂'],
-                    correct: 0, difficulty: 1 },
-                { q: 'Which element is represented by the symbol "Fe"?', opts: ['Iron', 'Fluorine', 'Francium',
-                        'Fermium'], correct: 0, difficulty: 2 },
-                { q: 'What type of bond forms between sodium and chlorine?', opts: ['Ionic bond', 'Covalent bond',
-                        'Hydrogen bond', 'Metallic bond'
-                    ], correct: 0, difficulty: 3 },
+            'chimie': [
+                { q: 'Quel est le symbole chimique de l\'or ?', opts: ['Au', 'Ag', 'Fe', 'Cu'], correct: 0, difficulte: 1 },
+                { q: 'Quel est le pH de l\'eau pure ?', opts: ['7', '0', '14', '5'], correct: 0, difficulte: 1 },
+                { q: 'Quel gaz est le plus abondant dans l\'atmosphère terrestre ?', opts: ['Azote', 'Oxygène', 'Dioxyde de carbone', 'Argon'], correct: 0, difficulte: 2 },
+                { q: 'Quelle est la formule chimique du sel de table ?', opts: ['NaCl', 'KCl', 'CaCl₂', 'MgCl₂'], correct: 0, difficulte: 1 },
+                { q: 'Quel élément est représenté par le symbole "Fe" ?', opts: ['Fer', 'Fluor', 'Francium', 'Fermium'], correct: 0, difficulte: 2 },
+                { q: 'Quel type de liaison se forme entre le sodium et le chlore ?', opts: ['Liaison ionique', 'Liaison covalente', 'Liaison hydrogène', 'Liaison métallique'], correct: 0, difficulte: 3 },
             ],
-            'social-studies': [
-                { q: 'What is the capital of Haiti?', opts: ['Port-au-Prince', 'Cap-Haïtien', 'Jacmel', 'Les Cayes'],
-                    correct: 0, difficulty: 1 },
-                { q: 'When did Haiti gain independence?', opts: ['1804', '1791', '1810', '1820'], correct: 0,
-                    difficulty: 2 },
-                { q: 'Who was the leader of the Haitian Revolution?', opts: ['Toussaint Louverture',
-                        'Jean-Jacques Dessalines', 'Henri Christophe', 'Alexandre Pétion'
-                    ], correct: 0, difficulty: 2 },
-                { q: 'What is the official language of Haiti?', opts: ['Haitian Creole and French', 'Only French',
-                        'Only Creole', 'Spanish and Creole'
-                    ], correct: 0, difficulty: 1 },
-                { q: 'Which country shares the island of Hispaniola with Haiti?', opts: ['Dominican Republic', 'Cuba',
-                        'Jamaica', 'Puerto Rico'
-                    ], correct: 0, difficulty: 1 },
-                { q: 'What is the name of the Haitian flag?', opts: ['Bicolore', 'Tricolore', 'Union Jack',
-                        'Stars and Stripes'
-                    ], correct: 0, difficulty: 2 },
+            'sciences-sociales': [
+                { q: 'Quelle est la capitale d\'Haïti ?', opts: ['Port-au-Prince', 'Cap-Haïtien', 'Jacmel', 'Les Cayes'], correct: 0, difficulte: 1 },
+                { q: 'Quand Haïti a-t-elle obtenu son indépendance ?', opts: ['1804', '1791', '1810', '1820'], correct: 0, difficulte: 2 },
+                { q: 'Qui a mené la révolution haïtienne ?', opts: ['Toussaint Louverture', 'Jean-Jacques Dessalines', 'Henri Christophe', 'Alexandre Pétion'], correct: 0, difficulte: 2 },
+                { q: 'Quelle est la langue officielle d\'Haïti ?', opts: ['Créole haïtien et français', 'Français seulement', 'Créole seulement', 'Espagnol et créole'], correct: 0, difficulte: 1 },
+                { q: 'Quel pays partage l\'île d\'Hispaniola avec Haïti ?', opts: ['République dominicaine', 'Cuba', 'Jamaïque', 'Porto Rico'], correct: 0, difficulte: 1 },
+                { q: 'Quel est le nom du drapeau haïtien ?', opts: ['Bicolore', 'Tricolore', 'Union Jack', 'Stars and Stripes'], correct: 0, difficulte: 2 },
             ],
-            'grammar': [
-                { q: 'Which sentence is correct?', opts: ['She goes to school every day.',
-                        'She go to school every day.', 'She going to school every day.',
-                        'She gone to school every day.'
-                    ], correct: 0, difficulty: 1 },
-                { q: 'What is the past tense of "run"?', opts: ['Ran', 'Runned', 'Running', 'Runs'], correct: 0,
-                    difficulty: 1 },
-                { q: 'Identify the noun: "The beautiful flower bloomed."', opts: ['Flower', 'Beautiful', 'Bloomed',
-                        'The'], correct: 0, difficulty: 1 },
-                { q: 'Which is a proper noun?', opts: ['Port-au-Prince', 'city', 'building', 'river'], correct: 0,
-                    difficulty: 1 },
-                { q: 'Choose the correct form: "They ___ to the party."', opts: ['went', 'gone', 'goes', 'going'],
-                    correct: 0, difficulty: 2 },
-                { q: 'What punctuation ends an interrogative sentence?', opts: ['Question mark', 'Period',
-                        'Exclamation mark', 'Comma'
-                    ], correct: 0, difficulty: 1 },
+            'grammaire': [
+                { q: 'Quelle phrase est correcte ?', opts: ['Elle va à l\'école tous les jours.', 'Elle aller à l\'école tous les jours.', 'Elle allant à l\'école tous les jours.', 'Elle allé à l\'école tous les jours.'], correct: 0, difficulte: 1 },
+                { q: 'Quel est le participe passé du verbe "courir" ?', opts: ['Couru', 'Courri', 'Courant', 'Courais'], correct: 0, difficulte: 1 },
+                { q: 'Identifiez le nom : "La belle fleur a éclos."', opts: ['Fleur', 'Belle', 'Éclos', 'La'], correct: 0, difficulte: 1 },
+                { q: 'Quel est un nom propre ?', opts: ['Port-au-Prince', 'ville', 'immeuble', 'rivière'], correct: 0, difficulte: 1 },
+                { q: 'Choisissez la forme correcte : "Ils ___ à la fête."', opts: ['sont allés', 'allé', 'va', 'allant'], correct: 0, difficulte: 2 },
+                { q: 'Quelle ponctuation termine une phrase interrogative ?', opts: ['Point d\'interrogation', 'Point', 'Point d\'exclamation', 'Virgule'], correct: 0, difficulte: 1 },
             ],
-            'general-knowledge': [
-                { q: 'Which is the largest ocean on Earth?', opts: ['Pacific Ocean', 'Atlantic Ocean', 'Indian Ocean',
-                        'Arctic Ocean'
-                    ], correct: 0, difficulty: 1 },
-                { q: 'How many continents are there?', opts: ['7', '5', '6', '8'], correct: 0, difficulty: 1 },
-                { q: 'What year did the COVID-19 pandemic begin?', opts: ['2019', '2018', '2020', '2021'], correct: 0,
-                    difficulty: 2 },
-                { q: 'Which sport is Messi famous for?', opts: ['Football/Soccer', 'Basketball', 'Tennis', 'Cricket'],
-                    correct: 0, difficulty: 1 },
-                { q: 'What is the currency of Haiti?', opts: ['Gourde', 'Dollar', 'Euro', 'Peso'], correct: 0,
-                    difficulty: 1 },
-                { q: 'Who painted the Mona Lisa?', opts: ['Leonardo da Vinci', 'Michelangelo', 'Picasso', 'Van Gogh'],
-                    correct: 0, difficulty: 1 },
-                { q: 'What does "www" stand for?', opts: ['World Wide Web', 'Web World Wide', 'Wide World Web',
-                        'Web Wide World'
-                    ], correct: 0, difficulty: 1 },
-                { q: 'Which country won the 2022 FIFA World Cup?', opts: ['Argentina', 'France', 'Brazil', 'Germany'],
-                    correct: 0, difficulty: 2 },
+            'culture-generale': [
+                { q: 'Quel est le plus grand océan du monde ?', opts: ['Océan Pacifique', 'Océan Atlantique', 'Océan Indien', 'Océan Arctique'], correct: 0, difficulte: 1 },
+                { q: 'Combien y a-t-il de continents ?', opts: ['7', '5', '6', '8'], correct: 0, difficulte: 1 },
+                { q: 'En quelle année la pandémie de COVID-19 a-t-elle commencé ?', opts: ['2019', '2018', '2020', '2021'], correct: 0, difficulte: 2 },
+                { q: 'Dans quel sport Messi est-il célèbre ?', opts: ['Football', 'Basketball', 'Tennis', 'Cricket'], correct: 0, difficulte: 1 },
+                { q: 'Quelle est la monnaie d\'Haïti ?', opts: ['Gourde', 'Dollar', 'Euro', 'Peso'], correct: 0, difficulte: 1 },
+                { q: 'Qui a peint la Joconde ?', opts: ['Léonard de Vinci', 'Michel-Ange', 'Picasso', 'Van Gogh'], correct: 0, difficulte: 1 },
+                { q: 'Que signifie "www" ?', opts: ['World Wide Web', 'Web World Wide', 'Wide World Web', 'Web Wide World'], correct: 0, difficulte: 1 },
+                { q: 'Quel pays a remporté la Coupe du Monde FIFA 2022 ?', opts: ['Argentine', 'France', 'Brésil', 'Allemagne'], correct: 0, difficulte: 2 },
             ],
         };
 
-        const CATEGORY_META = {
-            'english-creole': { name: 'English → Creole', icon: '🗣️', emoji: '🇭🇹' },
-            'math': { name: 'Mathematics', icon: '🔢', emoji: '📐' },
-            'science': { name: 'Science', icon: '🔬', emoji: '⚡' },
-            'biology': { name: 'Biology', icon: '🧬', emoji: '🦠' },
-            'chemistry': { name: 'Chemistry', icon: '⚗️', emoji: '🧪' },
-            'social-studies': { name: 'Social Studies', icon: '📚', emoji: '🌍' },
-            'grammar': { name: 'Grammar', icon: '📝', emoji: '✍️' },
-            'general-knowledge': { name: 'General Knowledge', icon: '🌐', emoji: '🧠' },
+        const META_CATEGORIES = {
+            'anglais-creole': { nom: 'Anglais → Créole', icone: '🗣️', emoji: '🇭🇹' },
+            'maths': { nom: 'Mathématiques', icone: '🔢', emoji: '📐' },
+            'sciences': { nom: 'Sciences', icone: '🔬', emoji: '⚡' },
+            'biologie': { nom: 'Biologie', icone: '🧬', emoji: '🦠' },
+            'chimie': { nom: 'Chimie', icone: '⚗️', emoji: '🧪' },
+            'sciences-sociales': { nom: 'Sciences sociales', icone: '📚', emoji: '🌍' },
+            'grammaire': { nom: 'Grammaire', icone: '📝', emoji: '✍️' },
+            'culture-generale': { nom: 'Culture générale', icone: '🌐', emoji: '🧠' },
         };
 
         // ═══════════════════════════════════════════════════════════════
-        //  INITIALIZATION
+        //  INITIALISATION
         // ═══════════════════════════════════════════════════════════════
-        function initFirebase() {
-            if (typeof firebase === 'undefined') {
-                console.warn('Firebase SDK not loaded. Running in demo mode.');
-                return false;
-            }
+        function initialiserFirebase() {
+            if (typeof firebase === 'undefined') return false;
+            if (CONFIG_FIREBASE.apiKey.includes('PLACEHOLDER') && !MODE_DEMO) return false;
+            if (MODE_DEMO) return false;
             try {
-                if (FIREBASE_CONFIG.apiKey.includes('PLACEHOLDER') && !DEMO_MODE) {
-                    console.warn('Firebase config not set. Using demo mode.');
-                    return false;
-                }
-                if (DEMO_MODE) return false;
-                firebase.initializeApp(FIREBASE_CONFIG);
+                firebase.initializeApp(CONFIG_FIREBASE);
                 auth = firebase.auth();
                 db = firebase.firestore();
                 if (db) db.settings({ merge: true });
-                firebaseReady = true;
+                firebasePret = true;
                 return true;
             } catch (e) {
-                console.error('Firebase init error:', e);
+                console.error('Erreur Firebase :', e);
                 return false;
             }
         }
 
-        function generateDemoUser() {
+        function genererUtilisateurDemo() {
             const id = 'demo_' + Math.random().toString(36).substr(2, 9);
-            const names = ['QuizWarrior', 'BrainStorm', 'AyitiChamp', 'KreyolKing', 'MathMaster', 'ScienceGeek',
-                'BioHacker', 'ChemWiz', 'HistoryBuff', 'GrammarPro'
-            ];
-            const name = names[Math.floor(Math.random() * names.length)] + Math.floor(Math.random() * 100);
-            return {
-                uid: id,
-                displayName: name,
-                email: name.toLowerCase() + '@demo.ayitopia.com',
-                photoURL: null,
-                isDemo: true,
-            };
+            const noms = ['QuizGuerrier', 'TempeteCerveau', 'ChampionAyiti', 'RoiKreyol', 'MaitreMaths', 'GeekSciences', 'BioHacker', 'SorcierChimie', 'BuffHistoire', 'ProGrammaire'];
+            const nom = noms[Math.floor(Math.random() * noms.length)] + Math.floor(Math.random() * 100);
+            return { uid: id, displayName: nom, email: nom.toLowerCase() + '@demo.ayitopia.com', photoURL: null, isDemo: true };
         }
 
-        function generateDemoUserData(user) {
+        function genererDonneesUtilisateurDemo(user) {
             return {
-                username: user.displayName || 'Player',
+                username: user.displayName || 'Joueur',
                 avatar: user.photoURL || null,
                 stats: {
-                    wins: Math.floor(Math.random() * 30),
-                    totalScore: Math.floor(Math.random() * 5000) + 200,
-                    accuracy: Math.floor(Math.random() * 30) + 55,
-                    rank: Math.floor(Math.random() * 500) + 1,
-                    totalMatches: Math.floor(Math.random() * 60) + 5,
+                    victoires: Math.floor(Math.random() * 30),
+                    scoreTotal: Math.floor(Math.random() * 5000) + 200,
+                    precision: Math.floor(Math.random() * 30) + 55,
+                    rang: Math.floor(Math.random() * 500) + 1,
+                    totalMatchs: Math.floor(Math.random() * 60) + 5,
                 },
-                referralCode: (user.displayName || 'USER').toUpperCase().replace(/\s/g, '') + Math.random().toString(36)
-                    .substr(2, 4).toUpperCase(),
-                referredBy: null,
-                referralCount: Math.floor(Math.random() * 15),
-                referralPoints: Math.floor(Math.random() * 150),
+                codeParrainage: (user.displayName || 'USER').toUpperCase().replace(/\s/g, '') + Math.random().toString(36).substr(2, 4).toUpperCase(),
+                parrainePar: null,
+                nombreParrainages: Math.floor(Math.random() * 15),
+                pointsParrainage: Math.floor(Math.random() * 150),
                 badges: [],
-                dailyWhatsAppShares: 0,
-                lastWhatsAppShareDate: null,
-                createdAt: new Date().toISOString(),
+                partagesWhatsAppQuotidiens: 0,
+                derniereDatePartage: null,
+                creeLe: new Date().toISOString(),
             };
         }
 
-        async function initApp() {
-            const fbReady = initFirebase();
-            if (fbReady && auth && db) {
-                // Real Firebase auth
+        async function initialiserApp() {
+            const fbOk = initialiserFirebase();
+            if (fbOk && auth && db) {
                 auth.onAuthStateChanged(async (user) => {
                     if (user) {
-                        currentUser = user;
-                        await loadUserData(user);
-                        finishInit();
+                        utilisateurActuel = user;
+                        await chargerDonneesUtilisateur(user);
+                        terminerInitialisation();
                     } else {
-                        // Anonymous sign-in for quick access
                         try {
                             const result = await auth.signInAnonymously();
-                            currentUser = result.user;
-                            await createNewUserData(currentUser);
-                            finishInit();
+                            utilisateurActuel = result.user;
+                            await creerNouvelUtilisateur(utilisateurActuel);
+                            terminerInitialisation();
                         } catch (e) {
-                            console.error('Auth error:', e);
-                            fallbackToDemo();
+                            console.error('Erreur auth :', e);
+                            fallbackDemo();
                         }
                     }
                 });
             } else {
-                // Demo mode
-                currentUser = generateDemoUser();
-                currentUserData = generateDemoUserData(currentUser);
-                APP_STATE.tutorialSeen = localStorage.getItem('ayitopia_tutorial_seen') === 'true';
-                APP_STATE.dailyWhatsAppShares = parseInt(localStorage.getItem('ayitopia_daily_shares') || '0');
-                APP_STATE.lastWhatsAppShareDate = localStorage.getItem('ayitopia_share_date') || null;
-                checkReferralOnLoad();
-                finishInit();
+                utilisateurActuel = genererUtilisateurDemo();
+                donneesUtilisateur = genererDonneesUtilisateurDemo(utilisateurActuel);
+                ETAT_APP.tutorielVu = localStorage.getItem('ayitopia_tutoriel_vu') === 'true';
+                ETAT_APP.partagesWhatsAppQuotidiens = parseInt(localStorage.getItem('ayitopia_partages_quotidiens') || '0');
+                ETAT_APP.derniereDatePartage = localStorage.getItem('ayitopia_date_partage') || null;
+                verifierParrainageAuChargement();
+                terminerInitialisation();
             }
         }
 
-        async function loadUserData(user) {
+        async function chargerDonneesUtilisateur(user) {
             if (!db) return;
             try {
-                const doc = await db.collection('users').doc(user.uid).get();
+                const doc = await db.collection('utilisateurs').doc(user.uid).get();
                 if (doc.exists) {
-                    currentUserData = doc.data();
-                    APP_STATE.tutorialSeen = currentUserData.tutorialSeen || false;
+                    donneesUtilisateur = doc.data();
+                    ETAT_APP.tutorielVu = donneesUtilisateur.tutorielVu || false;
                 } else {
-                    await createNewUserData(user);
+                    await creerNouvelUtilisateur(user);
                 }
             } catch (e) {
-                console.error('Load user error:', e);
-                currentUserData = generateDemoUserData(user);
+                console.error('Erreur chargement utilisateur :', e);
+                donneesUtilisateur = genererDonneesUtilisateurDemo(user);
             }
         }
 
-        async function createNewUserData(user) {
+        async function creerNouvelUtilisateur(user) {
             const data = {
-                username: user.displayName || user.email?.split('@')[0] || 'Player_' + Math.random().toString(36).substr(
-                    2, 5),
+                username: user.displayName || user.email?.split('@')[0] || 'Joueur_' + Math.random().toString(36).substr(2,5),
                 avatar: user.photoURL || null,
-                stats: { wins: 0, totalScore: 0, accuracy: 0, rank: 9999, totalMatches: 0 },
-                referralCode: (user.displayName || user.uid).toUpperCase().replace(/[^A-Z0-9]/g, '').substr(0, 8) + Math
-                    .random().toString(36).substr(2, 3).toUpperCase(),
-                referredBy: APP_STATE.pendingReferral || null,
-                referralCount: 0,
-                referralPoints: 0,
+                stats: { victoires: 0, scoreTotal: 0, precision: 0, rang: 9999, totalMatchs: 0 },
+                codeParrainage: (user.displayName || user.uid).toUpperCase().replace(/[^A-Z0-9]/g, '').substr(0,8) + Math.random().toString(36).substr(2,3).toUpperCase(),
+                parrainePar: ETAT_APP.parrainageEnAttente || null,
+                nombreParrainages: 0,
+                pointsParrainage: 0,
                 badges: [],
-                dailyWhatsAppShares: 0,
-                lastWhatsAppShareDate: null,
-                tutorialSeen: false,
-                createdAt: new Date().toISOString(),
+                partagesWhatsAppQuotidiens: 0,
+                derniereDatePartage: null,
+                tutorielVu: false,
+                creeLe: new Date().toISOString(),
             };
-            currentUserData = data;
-            APP_STATE.tutorialSeen = false;
-            if (db && !DEMO_MODE) {
+            donneesUtilisateur = data;
+            ETAT_APP.tutorielVu = false;
+            if (db && !MODE_DEMO) {
                 try {
-                    await db.collection('users').doc(user.uid).set(data);
-                    if (data.referredBy) {
-                        await processReferralBonus(data.referredBy, user.uid);
-                    }
-                } catch (e) { console.error('Create user error:', e); }
+                    await db.collection('utilisateurs').doc(user.uid).set(data);
+                    if (data.parrainePar) await traiterBonusParrainage(data.parrainePar, user.uid);
+                } catch (e) { console.error('Erreur création utilisateur :', e); }
             }
-            if (data.referredBy && DEMO_MODE) {
-                showToast('🔗 Joined via referral! Both you and your inviter earn bonuses.', 'info');
+            if (data.parrainePar && MODE_DEMO) {
+                afficherToast('🔗 Inscrit via parrainage ! Bonus pour vous et votre parrain.', 'info');
             }
         }
 
-        async function processReferralBonus(referrerCode, newUserId) {
-            if (!db || DEMO_MODE) return;
+        async function traiterBonusParrainage(codeParrain, nouvelId) {
+            if (!db || MODE_DEMO) return;
             try {
-                const snapshot = await db.collection('users').where('referralCode', '==', referrerCode).limit(1).get();
+                const snapshot = await db.collection('utilisateurs').where('codeParrainage', '==', codeParrain).limit(1).get();
                 if (!snapshot.empty) {
-                    const refDoc = snapshot.docs[0];
-                    await db.collection('users').doc(refDoc.id).update({
-                        referralCount: firebase.firestore.FieldValue.increment(1),
-                        referralPoints: firebase.firestore.FieldValue.increment(10),
-                        'stats.totalScore': firebase.firestore.FieldValue.increment(10),
+                    const docRef = snapshot.docs[0];
+                    await db.collection('utilisateurs').doc(docRef.id).update({
+                        nombreParrainages: firebase.firestore.FieldValue.increment(1),
+                        pointsParrainage: firebase.firestore.FieldValue.increment(10),
+                        'stats.scoreTotal': firebase.firestore.FieldValue.increment(10),
                     });
-                    await db.collection('users').doc(newUserId).update({
-                        'stats.totalScore': firebase.firestore.FieldValue.increment(5),
+                    await db.collection('utilisateurs').doc(nouvelId).update({
+                        'stats.scoreTotal': firebase.firestore.FieldValue.increment(5),
                     });
                 }
-            } catch (e) { console.error('Referral bonus error:', e); }
+            } catch (e) { console.error('Erreur bonus parrainage :', e); }
         }
 
-        function fallbackToDemo() {
-            currentUser = generateDemoUser();
-            currentUserData = generateDemoUserData(currentUser);
-            APP_STATE.tutorialSeen = localStorage.getItem('ayitopia_tutorial_seen') === 'true';
-            checkReferralOnLoad();
+        function fallbackDemo() {
+            utilisateurActuel = genererUtilisateurDemo();
+            donneesUtilisateur = genererDonneesUtilisateurDemo(utilisateurActuel);
+            ETAT_APP.tutorielVu = localStorage.getItem('ayitopia_tutoriel_vu') === 'true';
+            verifierParrainageAuChargement();
         }
 
-        function checkReferralOnLoad() {
+        function verifierParrainageAuChargement() {
             const params = new URLSearchParams(window.location.search);
             const ref = params.get('ref');
             if (ref) {
-                APP_STATE.pendingReferral = ref;
-                localStorage.setItem('ayitopia_pending_ref', ref);
+                ETAT_APP.parrainageEnAttente = ref;
+                localStorage.setItem('ayitopia_parrainage_attente', ref);
             } else {
-                APP_STATE.pendingReferral = localStorage.getItem('ayitopia_pending_ref') || null;
+                ETAT_APP.parrainageEnAttente = localStorage.getItem('ayitopia_parrainage_attente') || null;
             }
         }
 
-        function finishInit() {
-            document.getElementById('loading-screen').classList.remove('active');
-            document.getElementById('loading-screen').classList.add('hidden');
-            if (!APP_STATE.tutorialSeen) {
-                startTutorial();
+        function terminerInitialisation() {
+            document.getElementById('ecran-chargement').classList.remove('active');
+            if (!ETAT_APP.tutorielVu) {
+                lancerTutoriel();
             } else {
-                showScreen('lobby-screen');
+                afficherEcran('ecran-lobby');
             }
-            updateAllUI();
-            if (firebaseReady && db && !DEMO_MODE) {
-                startRealtimeListeners();
+            mettreAJourTouteInterface();
+            if (firebasePret && db && !MODE_DEMO) {
+                demarrerEcouteursTempsReel();
             }
-            if (DEMO_MODE) {
-                simulateOnlinePlayers();
+            if (MODE_DEMO) {
+                simulerJoueursEnLigne();
             }
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //  SCREEN NAVIGATION
+        //  NAVIGATION ENTRE ÉCRANS
         // ═══════════════════════════════════════════════════════════════
-        function showScreen(screenId) {
-            const allScreens = document.querySelectorAll('.screen');
-            const currentActive = document.querySelector('.screen.active');
-            const target = document.getElementById(screenId);
-            if (!target || (currentActive === target)) return;
+        function afficherEcran(idEcran) {
+            const tousLesEcrans = document.querySelectorAll('.screen');
+            tousLesEcrans.forEach(ecran => ecran.classList.remove('active'));
+            const cible = document.getElementById(idEcran);
+            if (cible) {
+                cible.classList.add('active');
+                cible.scrollTop = 0;
+            }
+            ETAT_APP.ecranActif = idEcran;
 
-            APP_STATE.previousScreen = APP_STATE.currentScreen;
-            APP_STATE.currentScreen = screenId;
-
-            allScreens.forEach(s => {
-                if (s.id !== screenId && s.classList.contains('active')) {
-                    s.classList.remove('active');
-                    s.classList.add('hidden-left');
-                    setTimeout(() => s.classList.remove('hidden-left'), 300);
-                }
-                if (s.id === screenId) {
-                    s.classList.remove('hidden', 'hidden-left');
-                    s.classList.add('active');
-                    s.scrollTop = 0;
-                }
-            });
-
-            // Update specific screens
-            if (screenId === 'lobby-screen') renderLobbyTab();
-            if (screenId === 'leaderboard-screen') renderLeaderboard();
-            if (screenId === 'profile-screen') renderProfile();
-            if (screenId === 'referral-screen') renderReferralScreen();
-            if (screenId === 'rewards-screen') renderRewards();
-            if (screenId === 'category-screen') renderCategories();
+            if (idEcran === 'ecran-lobby') renderContenuOngletLobby();
+            if (idEcran === 'ecran-classement') renderClassement();
+            if (idEcran === 'ecran-profil') renderProfil();
+            if (idEcran === 'ecran-parrainage') renderEcranParrainage();
+            if (idEcran === 'ecran-recompenses') renderRecompenses();
+            if (idEcran === 'ecran-categorie') renderCategories();
         }
-
         // ═══════════════════════════════════════════════════════════════
-        //  TUTORIAL SYSTEM
+        //  TUTORIEL
         // ═══════════════════════════════════════════════════════════════
-        const TUTORIAL_SLIDES = [
-            { icon: '🎮', title: 'Welcome to AYITOPIA!',
-                body: 'The ultimate Haitian competitive quiz arena. Test your knowledge, compete in real-time, and climb the ranks. This game is FAST and COMPETITIVE.',
-                color: 'var(--neon-blue)' },
-            { icon: '⚔️', title: 'How Matches Work',
-                body: 'Choose a category, enter matchmaking, and face opponents in 10-question battles. Answer FAST for more points. First correct answer gets bonus points!',
-                color: 'var(--neon-purple)' },
-            { icon: '⏱', title: 'Speed-Based Scoring',
-                body: 'The faster you answer correctly, the more points you earn. Slow answers = fewer points. Wrong answers = PENALTY (-25 pts). No answer = 0 points.',
-                color: 'var(--neon-red)' },
-            { icon: '🏆', title: 'Leaderboards',
-                body: 'Compete on Global, Daily, and Weekly leaderboards. Each category has its own ranking. Top players earn real rewards like data recharges!',
-                color: 'var(--neon-gold)' },
-            { icon: '📉', title: 'Ranks Can Go DOWN',
-                body: '⚠️ This game is NOT easy. Poor performance, wrong answers, and losing matches WILL lower your rank. Only the best rise to the top!',
-                color: 'var(--neon-red)' },
-            { icon: '👥', title: 'Referral System',
-                body: 'Invite friends with your unique referral link. Earn +10 points per signup. Share on WhatsApp for bonus points (max 5/day). Top inviters get special badges!',
-                color: 'var(--neon-green)' },
-            { icon: '🎁', title: 'Real Rewards',
-                body: 'Win Natcom or Digicel data recharges! Only top weekly leaderboard players qualify. Limited rewards ensure fairness. Stay consistent to win!',
-                color: 'var(--neon-gold)' },
-            { icon: '🚀', title: 'Ready to Compete?',
-                body: 'You now know the rules. The arena is waiting. Remember: stay sharp, answer fast, and protect your rank. Good luck, champion! 🇭🇹',
-                color: 'var(--neon-blue)' },
+        const DIAPOS_TUTORIEL = [
+            { icone: '🎮', titre: 'Bienvenue sur AYITOPIA !', corps: 'L\'arène ultime de quiz compétitif haïtien. Testez vos connaissances, affrontez des adversaires en temps réel et gravissez les échelons. Ce jeu est RAPIDE et COMPÉTITIF.' },
+            { icone: '⚔️', titre: 'Comment fonctionnent les matchs', corps: 'Choisissez une catégorie, lancez la recherche de match et affrontez vos adversaires sur 10 questions. Répondez VITE pour marquer plus de points. Le premier à répondre correctement gagne un bonus !' },
+            { icone: '⏱', titre: 'Score basé sur la vitesse', corps: 'Plus vous répondez vite et juste, plus vous gagnez de points. Réponse lente = moins de points. Mauvaise réponse = PÉNALITÉ (-25 pts). Aucune réponse = 0 point.' },
+            { icone: '🏆', titre: 'Classements', corps: 'Rivalisez sur les classements Global, Quotidien et Hebdomadaire. Chaque catégorie a son propre classement. Les meilleurs joueurs remportent des récompenses réelles comme des recharges de données !' },
+            { icone: '📉', titre: 'Votre rang peut BAISSER', corps: '⚠️ Ce jeu n\'est PAS facile. Les mauvaises performances, les réponses fausses et les défaites FONT BAISSER votre rang. Seuls les meilleurs restent au sommet !' },
+            { icone: '👥', titre: 'Système de parrainage', corps: 'Invitez vos amis avec votre lien de parrainage unique. Gagnez +10 points par inscription. Partagez sur WhatsApp pour des points bonus (max 5/jour). Les meilleurs parrains reçoivent des badges spéciaux !' },
+            { icone: '🎁', titre: 'Récompenses réelles', corps: 'Gagnez des recharges de données Natcom ou Digicel ! Seuls les meilleurs classements hebdomadaires sont éligibles. Récompenses limitées pour garantir l\'équité. Restez constant pour gagner !' },
+            { icone: '🚀', titre: 'Prêt à concourir ?', corps: 'Vous connaissez maintenant les règles. L\'arène vous attend. Rappelez-vous : soyez vif, répondez vite et protégez votre rang. Bonne chance, champion(ne) ! 🇭🇹' },
         ];
 
-        function startTutorial() {
-            APP_STATE.tutorialStep = 0;
-            const overlay = document.getElementById('tutorial-overlay');
-            overlay.classList.remove('hidden');
-            renderTutorialSlide();
+        function lancerTutoriel() {
+            ETAT_APP.etapeTutoriel = 0;
+            document.getElementById('tutoriel-overlay').classList.remove('hidden');
+            renderDiapoTutoriel();
         }
 
-        function renderTutorialSlide() {
-            const slide = TUTORIAL_SLIDES[APP_STATE.tutorialStep];
-            const overlay = document.getElementById('tutorial-overlay');
-            const isLast = APP_STATE.tutorialStep >= TUTORIAL_SLIDES.length - 1;
-
-            let dotsHTML = '';
-            for (let i = 0; i < TUTORIAL_SLIDES.length; i++) {
-                let dotClass = '';
-                if (i < APP_STATE.tutorialStep) dotClass = 'done';
-                if (i === APP_STATE.tutorialStep) dotClass = 'active';
-                dotsHTML += `<div class="tutorial-dot ${dotClass}"></div>`;
+        function renderDiapoTutoriel() {
+            const diapo = DIAPOS_TUTORIEL[ETAT_APP.etapeTutoriel];
+            const estDerniere = ETAT_APP.etapeTutoriel >= DIAPOS_TUTORIEL.length - 1;
+            let pointsHTML = '';
+            for (let i = 0; i < DIAPOS_TUTORIEL.length; i++) {
+                let classe = '';
+                if (i < ETAT_APP.etapeTutoriel) classe = 'fait';
+                if (i === ETAT_APP.etapeTutoriel) classe = 'actif';
+                pointsHTML += `<div class="tutoriel-point ${classe}"></div>`;
             }
-
-            overlay.innerHTML = `
-            <div class="tutorial-card">
-              <div class="tutorial-icon">${slide.icon}</div>
-              <div class="tutorial-title" style="color:${slide.color}">${slide.title}</div>
-              <div class="tutorial-body">${slide.body}</div>
-              <div class="tutorial-dots">${dotsHTML}</div>
-              <div class="tutorial-btns">
-                <button class="btn btn-ghost btn-sm" onclick="skipTutorial()">Skip All</button>
-                <button class="btn btn-primary" onclick="nextTutorialSlide()">
-                  ${isLast ? '🏁 Enter Arena' : 'Next →'}
-                </button>
-              </div>
-            </div>
-          `;
+            document.getElementById('tutoriel-overlay').innerHTML = `
+                <div class="tutoriel-card">
+                    <div class="tutoriel-icone">${diapo.icone}</div>
+                    <div class="tutoriel-titre">${diapo.titre}</div>
+                    <div class="tutoriel-corps">${diapo.corps}</div>
+                    <div class="tutoriel-points">${pointsHTML}</div>
+                    <div class="tutoriel-btns">
+                        <button class="btn btn-fantome btn-sm" onclick="sauterTutoriel()">Passer</button>
+                        <button class="btn btn-primaire" onclick="etapeTutorielSuivante()">${estDerniere ? '🏁 Entrer dans l\'arène' : 'Suivant →'}</button>
+                    </div>
+                </div>
+            `;
         }
 
-        function nextTutorialSlide() {
-            APP_STATE.tutorialStep++;
-            if (APP_STATE.tutorialStep >= TUTORIAL_SLIDES.length) {
-                completeTutorial();
+        function etapeTutorielSuivante() {
+            ETAT_APP.etapeTutoriel++;
+            if (ETAT_APP.etapeTutoriel >= DIAPOS_TUTORIEL.length) {
+                terminerTutoriel();
             } else {
-                renderTutorialSlide();
+                renderDiapoTutoriel();
             }
         }
 
-        function skipTutorial() {
-            completeTutorial();
-        }
+        function sauterTutoriel() { terminerTutoriel(); }
 
-        function completeTutorial() {
-            APP_STATE.tutorialSeen = true;
-            localStorage.setItem('ayitopia_tutorial_seen', 'true');
-            if (currentUserData) currentUserData.tutorialSeen = true;
-            if (db && !DEMO_MODE && currentUser) {
-                db.collection('users').doc(currentUser.uid).update({ tutorialSeen: true }).catch(() => {});
+        function terminerTutoriel() {
+            ETAT_APP.tutorielVu = true;
+            localStorage.setItem('ayitopia_tutoriel_vu', 'true');
+            if (donneesUtilisateur) donneesUtilisateur.tutorielVu = true;
+            if (db && !MODE_DEMO && utilisateurActuel) {
+                db.collection('utilisateurs').doc(utilisateurActuel.uid).update({ tutorielVu: true }).catch(() => {});
             }
-            document.getElementById('tutorial-overlay').classList.add('hidden');
-            showScreen('lobby-screen');
-            showToast('✅ Tutorial complete! Good luck in the arena!', 'success');
+            document.getElementById('tutoriel-overlay').classList.add('hidden');
+            afficherEcran('ecran-lobby');
+            afficherToast('✅ Tutoriel terminé ! Bonne chance dans l\'arène !', 'succes');
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //  LOBBY & TABS
+        //  LOBBY ET ONGLETS
         // ═══════════════════════════════════════════════════════════════
-        function renderLobbyTab() {
-            const container = document.getElementById('lobby-tab-content');
-            const tab = APP_STATE.lobbyTab;
-            if (tab === 'play') {
-                container.innerHTML = `
-              <div style="font-weight:700;font-size:14px;margin-bottom:8px;">🔥 Popular Categories</div>
-              <div class="category-grid" id="lobby-cat-grid"></div>
-              <button class="btn btn-primary btn-block btn-lg" style="margin-top:8px;" onclick="showScreen('category-screen')">
-                📋 All Categories
-              </button>
-            `;
-                renderLobbyCategories();
-            } else if (tab === 'leaderboard') {
-                container.innerHTML = `<div id="lobby-lb-content"></div>`;
-                renderMiniLeaderboard();
-            } else if (tab === 'referrals') {
-                container.innerHTML = `
-              <div style="text-align:center;font-weight:700;color:var(--neon-gold);">👥 Invite & Earn</div>
-              <div class="ref-code-box">${currentUserData?.referralCode || '----'}</div>
-              <button class="btn btn-gold btn-block btn-sm" onclick="shareWhatsApp()">📲 Share on WhatsApp</button>
-              <button class="btn btn-secondary btn-block btn-sm" style="margin-top:6px;" onclick="showScreen('referral-screen')">View Full Referral Page →</button>
-            `;
-            } else if (tab === 'rewards') {
-                container.innerHTML = `
-              <div id="lobby-rewards-list"></div>
-              <button class="btn btn-secondary btn-block btn-sm" style="margin-top:6px;" onclick="showScreen('rewards-screen')">View All Rewards →</button>
-            `;
-                renderMiniRewards();
+        function renderContenuOngletLobby() {
+            const conteneur = document.getElementById('lobby-contenu-onglet');
+            const onglet = ETAT_APP.ongletLobby;
+            if (onglet === 'jouer') {
+                conteneur.innerHTML = `
+                    <div style="font-weight:700;font-size:14px;margin-bottom:8px;">🔥 Catégories populaires</div>
+                    <div class="categorie-grid" id="lobby-cat-grid"></div>
+                    <button class="btn btn-primaire btn-block btn-lg" style="margin-top:8px;" onclick="afficherEcran('ecran-categorie')">📋 Toutes les catégories</button>
+                `;
+                renderCategoriesLobby();
+            } else if (onglet === 'classement') {
+                conteneur.innerHTML = `<div id="lobby-classement-contenu"></div>`;
+                renderMiniClassement();
+            } else if (onglet === 'parrainage') {
+                conteneur.innerHTML = `
+                    <div style="text-align:center;font-weight:700;color:var(--neon-gold);">👥 Invitez et gagnez</div>
+                    <div class="ref-code-box">${donneesUtilisateur?.codeParrainage || '----'}</div>
+                    <button class="btn btn-or btn-block btn-sm" onclick="partagerWhatsApp()">📲 Partager sur WhatsApp</button>
+                    <button class="btn btn-secondaire btn-block btn-sm" style="margin-top:6px;" onclick="afficherEcran('ecran-parrainage')">Voir la page parrainage →</button>
+                `;
+            } else if (onglet === 'recompenses') {
+                conteneur.innerHTML = `
+                    <div id="lobby-recompenses-liste"></div>
+                    <button class="btn btn-secondaire btn-block btn-sm" style="margin-top:6px;" onclick="afficherEcran('ecran-recompenses')">Voir toutes les récompenses →</button>
+                `;
+                renderMiniRecompenses();
             }
         }
 
-        function renderLobbyCategories() {
-            const grid = document.getElementById('lobby-cat-grid');
-            if (!grid) return;
-            const cats = Object.entries(CATEGORY_META).slice(0, 6);
-            grid.innerHTML = cats.map(([key, meta]) => `
-            <div class="category-card" onclick="selectCategory('${key}')">
-              <div class="cat-icon">${meta.icon}</div>
-              <div class="cat-name">${meta.name}</div>
-              <div class="cat-players">${getSimulatedPlayers(key)} playing</div>
-              ${key === 'english-creole' ? '<div class="cat-badge">HOT</div>' : ''}
-            </div>
-          `).join('');
+        function renderCategoriesLobby() {
+            const grille = document.getElementById('lobby-cat-grid');
+            if (!grille) return;
+            const cats = Object.entries(META_CATEGORIES).slice(0, 6);
+            grille.innerHTML = cats.map(([cle, meta]) => `
+                <div class="categorie-card" onclick="choisirCategorie('${cle}')">
+                    <div class="cat-icone">${meta.icone}</div>
+                    <div class="cat-nom">${meta.nom}</div>
+                    <div class="cat-joueurs">${getJoueursSimules(cle)} joueurs</div>
+                    ${cle === 'anglais-creole' ? '<div class="cat-badge">TOP</div>' : ''}
+                </div>
+            `).join('');
         }
 
         function renderCategories() {
-            const grid = document.getElementById('category-grid');
-            if (!grid) return;
-            grid.innerHTML = Object.entries(CATEGORY_META).map(([key, meta]) => `
-            <div class="category-card" onclick="selectCategory('${key}')">
-              <div class="cat-icon">${meta.icon}</div>
-              <div class="cat-name">${meta.name}</div>
-              <div class="cat-players">${getSimulatedPlayers(key)} playing now</div>
-              ${key === 'english-creole' || key === 'general-knowledge' ? '<div class="cat-badge">HOT</div>' : ''}
-            </div>
-          `).join('');
+            const grille = document.getElementById('categorie-grid');
+            if (!grille) return;
+            grille.innerHTML = Object.entries(META_CATEGORIES).map(([cle, meta]) => `
+                <div class="categorie-card" onclick="choisirCategorie('${cle}')">
+                    <div class="cat-icone">${meta.icone}</div>
+                    <div class="cat-nom">${meta.nom}</div>
+                    <div class="cat-joueurs">${getJoueursSimules(cle)} joueurs</div>
+                    ${cle === 'anglais-creole' || cle === 'culture-generale' ? '<div class="cat-badge">TOP</div>' : ''}
+                </div>
+            `).join('');
         }
 
-        function getSimulatedPlayers(catKey) {
-            const base = { 'english-creole': 45, 'math': 32, 'general-knowledge': 38, 'science': 20, 'biology': 15,
-                'chemistry': 12, 'social-studies': 18, 'grammar': 14 };
-            return (base[catKey] || 10) + Math.floor(Math.random() * 15);
+        function getJoueursSimules(cleCat) {
+            const base = { 'anglais-creole': 45, 'maths': 32, 'culture-generale': 38, 'sciences': 20, 'biologie': 15, 'chimie': 12, 'sciences-sociales': 18, 'grammaire': 14 };
+            return (base[cleCat] || 10) + Math.floor(Math.random() * 15);
         }
 
-        function selectCategory(catKey) {
-            APP_STATE.selectedCategory = catKey;
-            APP_STATE.selectedCategoryName = CATEGORY_META[catKey]?.name || catKey;
-            showScreen('matchmaking-screen');
-            startMatchmaking(catKey);
+        function choisirCategorie(cleCat) {
+            ETAT_APP.categorieChoisie = cleCat;
+            ETAT_APP.nomCategorieChoisie = META_CATEGORIES[cleCat]?.nom || cleCat;
+            afficherEcran('ecran-matchmaking');
+            lancerMatchmaking(cleCat);
         }
 
-        function renderMiniLeaderboard() {
-            const container = document.getElementById('lobby-lb-content');
-            if (!container) return;
-            const entries = generateDemoLeaderboard(8);
-            container.innerHTML = entries.map((e, i) => `
-            <div class="lb-row ${i < 3 ? 'top-' + (i + 1) : ''}">
-              <div class="lb-rank-num">${i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1)}</div>
-              <div class="lb-avatar">${e.avatar}</div>
-              <div class="lb-info"><div class="lb-name">${e.name}</div><div class="lb-stats">${e.matches} matches • ${e.accuracy}% acc</div></div>
-              <div class="lb-score">${e.score.toLocaleString()}</div>
-            </div>
-          `).join('') +
-                `<button class="btn btn-secondary btn-block btn-sm" style="margin-top:8px;" onclick="showScreen('leaderboard-screen')">View Full Leaderboard →</button>`;
+        function renderMiniClassement() {
+            const conteneur = document.getElementById('lobby-classement-contenu');
+            if (!conteneur) return;
+            const entrees = genererClassementDemo(8);
+            conteneur.innerHTML = entrees.map((e, i) => `
+                <div class="ligne-classement ${i < 3 ? 'top'+(i+1) : ''}">
+                    <div class="rang-numero">${i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#'+(i+1)}</div>
+                    <div class="avatar-lb">${e.avatar}</div>
+                    <div class="info-lb"><div class="nom-lb">${e.nom}</div><div class="stats-lb">${e.matchs} matchs • ${e.precision}% préc.</div></div>
+                    <div class="score-lb">${e.score.toLocaleString()}</div>
+                </div>
+            `).join('') + `<button class="btn btn-secondaire btn-block btn-sm" style="margin-top:8px;" onclick="afficherEcran('ecran-classement')">Voir le classement complet →</button>`;
         }
 
-        function generateDemoLeaderboard(count) {
-            const names = ['BrainStorm99', 'KreyolKing', 'MathWizard', 'SciencePro', 'AyitiChamp', 'QuizMaster',
-                'BioGenius', 'ChemLord', 'HistoryBuff', 'GrammarGod', 'SpeedDemon', 'KnowledgeSeeker'
-            ];
-            const avatars = ['🦁', '🐉', '⚡', '🔥', '💎', '🌟', '🦅', '🐺', '🦊', '👑'];
-            const entries = [];
-            for (let i = 0; i < count; i++) {
-                entries.push({
-                    name: names[i] || names[Math.floor(Math.random() * names.length)],
+        function genererClassementDemo(nb) {
+            const noms = ['BrainStorm99', 'RoiKreyol', 'MathWizard', 'SciencePro', 'AyitiChamp', 'QuizMaster', 'BioGenius', 'ChimieLord', 'HistoireBuff', 'GrammaireGod'];
+            const avatars = ['🦁','🐉','⚡','🔥','💎','🌟','🦅','🐺','🦊','👑'];
+            const entrees = [];
+            for (let i=0; i<nb; i++) {
+                entrees.push({
+                    nom: noms[i] || noms[Math.floor(Math.random()*noms.length)],
                     avatar: avatars[i] || '👤',
-                    score: Math.floor(8000 - i * 350 + Math.random() * 100),
-                    matches: Math.floor(40 + Math.random() * 60),
-                    accuracy: Math.floor(65 + Math.random() * 30),
+                    score: Math.floor(8000 - i*350 + Math.random()*100),
+                    matchs: Math.floor(40+Math.random()*60),
+                    precision: Math.floor(65+Math.random()*30),
                 });
             }
-            entries.sort((a, b) => b.score - a.score);
-            return entries;
+            entrees.sort((a,b) => b.score - a.score);
+            return entrees;
         }
 
-        function renderMiniRewards() {
-            const container = document.getElementById('lobby-rewards-list');
-            if (!container) return;
-            container.innerHTML = `
-            <div class="reward-card">
-              <div class="reward-icon">📱</div>
-              <div class="reward-info"><div class="reward-name">Natcom Data Recharge</div><div class="reward-desc">500 MB - Weekly Top 10</div></div>
-              <div class="reward-status locked">🔒 Top 10</div>
-            </div>
-            <div class="reward-card">
-              <div class="reward-icon">📶</div>
-              <div class="reward-info"><div class="reward-name">Digicel Data Recharge</div><div class="reward-desc">1 GB - Weekly Top 3</div></div>
-              <div class="reward-status locked">🔒 Top 3</div>
-            </div>
-          `;
+        function renderMiniRecompenses() {
+            const conteneur = document.getElementById('lobby-recompenses-liste');
+            if (!conteneur) return;
+            conteneur.innerHTML = `
+                <div class="recompense-card">
+                    <div class="recompense-icone">📱</div>
+                    <div class="recompense-info"><div class="recompense-nom">Recharge Natcom 500 Mo</div><div class="recompense-desc">Top 10 hebdomadaire</div></div>
+                    <div class="recompense-statut verrou">🔒 Top 10</div>
+                </div>
+                <div class="recompense-card">
+                    <div class="recompense-icone">📶</div>
+                    <div class="recompense-info"><div class="recompense-nom">Recharge Digicel 1 Go</div><div class="recompense-desc">Top 3 hebdomadaire</div></div>
+                    <div class="recompense-statut verrou">🔒 Top 3</div>
+                </div>
+            `;
         }
 
         // ═══════════════════════════════════════════════════════════════
         //  MATCHMAKING
         // ═══════════════════════════════════════════════════════════════
-        function startMatchmaking(catKey) {
-            APP_STATE.matchId = null;
-            APP_STATE.matchData = null;
-            APP_STATE.matchFinished = false;
-            document.getElementById('mm-category-name').textContent = 'Category: ' + (CATEGORY_META[catKey]?.name ||
-                catKey);
-            document.getElementById('mm-queue-count').textContent = Math.floor(Math.random() * 8) + 2;
-
-            // Simulate finding a match
-            const waitTime = 1500 + Math.random() * 3000;
+        function lancerMatchmaking(cleCat) {
+            ETAT_APP.idMatch = null;
+            ETAT_APP.donneesMatch = null;
+            ETAT_APP.matchTermine = false;
+            document.getElementById('mm-nom-categorie').textContent = 'Catégorie : ' + (META_CATEGORIES[cleCat]?.nom || cleCat);
+            document.getElementById('mm-file-compte').textContent = Math.floor(Math.random() * 8) + 2;
+            const delai = 1500 + Math.random() * 3000;
             setTimeout(() => {
-                if (APP_STATE.currentScreen === 'matchmaking-screen') {
-                    createMatch(catKey);
+                if (ETAT_APP.ecranActif === 'ecran-matchmaking') {
+                    creerMatch(cleCat);
                 }
-            }, waitTime);
-
-            document.getElementById('mm-cancel-btn').onclick = () => {
-                APP_STATE.matchId = null;
-                showScreen('lobby-screen');
+            }, delai);
+            document.getElementById('mm-annuler-btn').onclick = () => {
+                ETAT_APP.idMatch = null;
+                afficherEcran('ecran-lobby');
             };
         }
 
-        function createMatch(catKey) {
-            const questions = generateMatchQuestions(catKey);
-            const botOpponents = generateBotOpponents();
-            const allPlayers = [
-                { uid: currentUser?.uid || 'player_self', username: currentUserData?.username || 'You',
-                    avatar: currentUserData?.avatar || '👤', isBot: false, score: 0, answers: [] },
-                ...botOpponents,
+        function creerMatch(cleCat) {
+            const questions = genererQuestionsMatch(cleCat);
+            const bots = genererAdversairesBots();
+            const tousJoueurs = [
+                { uid: utilisateurActuel?.uid || 'joueur_soi', username: donneesUtilisateur?.username || 'Vous', avatar: donneesUtilisateur?.avatar || '👤', estBot: false, score: 0, reponses: [] },
+                ...bots,
             ];
-
-            APP_STATE.matchData = {
-                category: catKey,
-                status: 'active',
-                players: allPlayers,
+            ETAT_APP.donneesMatch = {
+                categorie: cleCat,
+                statut: 'actif',
+                joueurs: tousJoueurs,
                 questions: questions,
-                currentQuestion: 0,
-                startTime: Date.now(),
+                questionActuelle: 0,
+                debut: Date.now(),
             };
-            APP_STATE.matchId = 'match_' + Date.now();
-            APP_STATE.matchPlayerIndex = 0;
-            APP_STATE.currentQuestionIndex = 0;
-            APP_STATE.answersSubmitted = [];
-            APP_STATE.matchScores = {};
-            APP_STATE.matchFinished = false;
-            allPlayers.forEach(p => { APP_STATE.matchScores[p.uid] = 0; });
-
-            showScreen('match-screen');
-            startQuestion(0);
+            ETAT_APP.idMatch = 'match_' + Date.now();
+            ETAT_APP.indexJoueurMatch = 0;
+            ETAT_APP.indexQuestionActuelle = 0;
+            ETAT_APP.reponsesSoumises = [];
+            ETAT_APP.scoresMatch = {};
+            ETAT_APP.matchTermine = false;
+            tousJoueurs.forEach(p => { ETAT_APP.scoresMatch[p.uid] = 0; });
+            afficherEcran('ecran-match');
+            lancerQuestion(0);
         }
 
-        function generateMatchQuestions(catKey) {
-            const bank = QUESTION_BANK[catKey] || QUESTION_BANK['general-knowledge'];
-            const shuffled = [...bank].sort(() => Math.random() - 0.5);
-            const selected = shuffled.slice(0, 10);
-            // Ensure we have 10 questions
-            while (selected.length < 10) {
-                const extraPool = Object.values(QUESTION_BANK).flat();
-                const extra = extraPool[Math.floor(Math.random() * extraPool.length)];
-                if (!selected.find(s => s.q === extra.q)) selected.push(extra);
+        function genererQuestionsMatch(cleCat) {
+            const banque = BANQUE_QUESTIONS[cleCat] || BANQUE_QUESTIONS['culture-generale'];
+            const melange = [...banque].sort(() => Math.random() - 0.5);
+            const selection = melange.slice(0, 10);
+            while (selection.length < 10) {
+                const supplement = Object.values(BANQUE_QUESTIONS).flat()[Math.floor(Math.random() * Object.values(BANQUE_QUESTIONS).flat().length)];
+                if (!selection.find(s => s.q === supplement.q)) selection.push(supplement);
             }
-            return selected.slice(0, 10).map((q, i) => ({
-                ...q,
-                id: 'q_' + i,
-                timeLimit: q.difficulty === 3 ? 25 : q.difficulty === 2 ? 20 : 15,
-            }));
+            return selection.slice(0,10).map((q, i) => ({ ...q, id: 'q_'+i, limiteTemps: q.difficulte === 3 ? 25 : q.difficulte === 2 ? 20 : 15 }));
         }
 
-        function generateBotOpponents() {
-            const botNames = ['ShadowBlade', 'QuizPhantom', 'BrainStorm', 'SpeedKing', 'NightHawk', 'ThunderMind',
-            'RapidFire'];
-            const botAvatars = ['🦊', '🐺', '🦅', '⚡', '🔥', '💀', '👾'];
-            const count = 2 + Math.floor(Math.random() * 3); // 2-4 bots
+        function genererAdversairesBots() {
+            const nomsBots = ['OmbreLame', 'FantomeQuiz', 'TempeteCerveau', 'RoiVitesse', 'FauconNuit', 'EspritTonnerre', 'FeuRapide'];
+            const avatarsBots = ['🦊','🐺','🦅','⚡','🔥','💀','👾'];
+            const nb = 2 + Math.floor(Math.random() * 3);
             const bots = [];
-            const usedNames = new Set();
-            for (let i = 0; i < count; i++) {
-                let name = botNames[Math.floor(Math.random() * botNames.length)];
-                while (usedNames.has(name)) name = botNames[Math.floor(Math.random() * botNames.length)] + '_' + i;
-                usedNames.add(name);
+            const nomsUtilises = new Set();
+            for (let i=0; i<nb; i++) {
+                let nom = nomsBots[Math.floor(Math.random()*nomsBots.length)];
+                while (nomsUtilises.has(nom)) nom = nomsBots[Math.floor(Math.random()*nomsBots.length)] + '_' + i;
+                nomsUtilises.add(nom);
                 bots.push({
-                    uid: 'bot_' + i + '_' + Date.now(),
-                    username: name,
-                    avatar: botAvatars[i % botAvatars.length],
-                    isBot: true,
+                    uid: 'bot_'+i+'_'+Date.now(),
+                    username: nom,
+                    avatar: avatarsBots[i % avatarsBots.length],
+                    estBot: true,
                     score: 0,
-                    answers: [],
-                    skillLevel: 0.4 + Math.random() * 0.5, // 40-90% chance of correct answer
-                    speedFactor: 0.3 + Math.random() * 0.7, // How fast they answer (fraction of time limit)
+                    reponses: [],
+                    niveau: 0.4 + Math.random() * 0.5,
+                    facteurVitesse: 0.3 + Math.random() * 0.7,
                 });
             }
             return bots;
         }
-  // ═══════════════════════════════════════════════════════════════
-        //  MATCH GAMEPLAY
+
         // ═══════════════════════════════════════════════════════════════
-        function startQuestion(index) {
-            if (index >= 10 || APP_STATE.matchFinished) {
-                endMatch();
+        //  DÉROULEMENT DU MATCH
+        // ═══════════════════════════════════════════════════════════════
+        function lancerQuestion(index) {
+            if (index >= 10 || ETAT_APP.matchTermine) {
+                terminerMatch();
                 return;
             }
-            APP_STATE.currentQuestionIndex = index;
-            APP_STATE.answersSubmitted = [];
-            const q = APP_STATE.matchData.questions[index];
-            APP_STATE.questionStartTime = Date.now();
-            APP_STATE.questionTimeLimit = q.timeLimit || 20;
+            ETAT_APP.indexQuestionActuelle = index;
+            ETAT_APP.reponsesSoumises = [];
+            const q = ETAT_APP.donneesMatch.questions[index];
+            ETAT_APP.debutQuestion = Date.now();
+            ETAT_APP.limiteTempsQuestion = q.limiteTemps || 20;
 
-            document.getElementById('match-q-num').textContent = `Question ${index + 1} / 10`;
+            document.getElementById('match-num-question').textContent = `Question ${index+1} / 10`;
             document.getElementById('match-question').textContent = q.q;
-            const optsContainer = document.getElementById('match-options');
-            optsContainer.innerHTML = q.opts.map((opt, i) => `
-            <div class="match-option" data-index="${i}" onclick="submitAnswer(${i})">${opt}</div>
-          `).join('');
-            document.getElementById('match-timer-fill').style.width = '100%';
-            document.getElementById('match-timer-fill').classList.remove('urgent');
-            updateLiveScores();
+            const conteneurOptions = document.getElementById('match-options');
+            conteneurOptions.innerHTML = q.opts.map((opt, i) => `
+                <div class="match-option" data-index="${i}" onclick="soumettreReponse(${i})">${opt}</div>
+            `).join('');
+            document.getElementById('match-chrono-remplissage').style.width = '100%';
+            document.getElementById('match-chrono-remplissage').classList.remove('urgent');
+            mettreAJourScoresLive();
 
-            // Simulate bot answers
-            if (APP_STATE.matchData) {
-                APP_STATE.matchData.players.forEach((p, pi) => {
-                    if (p.isBot && !APP_STATE.answersSubmitted.includes(p.uid)) {
-                        const botDelay = p.speedFactor * APP_STATE.questionTimeLimit * 1000;
-                        const botCorrect = Math.random() < p.skillLevel;
-                        const botAnswer = botCorrect ? q.correct : Math.floor(Math.random() * q.opts.length);
-                        setTimeout(() => {
-                            if (!APP_STATE.answersSubmitted.includes(p.uid) && APP_STATE.matchData &&
-                                APP_STATE.currentQuestionIndex === index) {
-                                processBotAnswer(p, pi, botAnswer, q);
-                            }
-                        }, Math.max(800, botDelay));
-                    }
-                });
-            }
-
-            // Timer
-            const timerFill = document.getElementById('match-timer-fill');
-            const totalMs = APP_STATE.questionTimeLimit * 1000;
-            const timerInterval = setInterval(() => {
-                if (APP_STATE.matchFinished || APP_STATE.currentQuestionIndex !== index) {
-                    clearInterval(timerInterval);
-                    return;
+            ETAT_APP.donneesMatch.joueurs.forEach((p, pi) => {
+                if (p.estBot && !ETAT_APP.reponsesSoumises.includes(p.uid)) {
+                    const delaiBot = p.facteurVitesse * ETAT_APP.limiteTempsQuestion * 1000;
+                    const reponseCorrecte = Math.random() < p.niveau;
+                    const reponse = reponseCorrecte ? q.correct : Math.floor(Math.random() * q.opts.length);
+                    setTimeout(() => {
+                        if (!ETAT_APP.reponsesSoumises.includes(p.uid) && ETAT_APP.donneesMatch && ETAT_APP.indexQuestionActuelle === index) {
+                            traiterReponseBot(p, pi, reponse, q);
+                        }
+                    }, Math.max(800, delaiBot));
                 }
-                const elapsed = Date.now() - APP_STATE.questionStartTime;
-                const remaining = Math.max(0, totalMs - elapsed);
-                const pct = (remaining / totalMs) * 100;
-                timerFill.style.width = pct + '%';
-                if (pct < 25) timerFill.classList.add('urgent');
-                if (remaining <= 0) {
-                    clearInterval(timerInterval);
-                    moveToNextQuestion();
-                }
-            }, 100);
-
-            // Store interval for cleanup
-            APP_STATE._timerInterval = timerInterval;
-        }
-
-        function submitAnswer(optionIndex) {
-            const playerUid = currentUser?.uid || 'player_self';
-            if (APP_STATE.answersSubmitted.includes(playerUid)) return;
-            if (APP_STATE.matchFinished) return;
-
-            APP_STATE.answersSubmitted.push(playerUid);
-            const q = APP_STATE.matchData.questions[APP_STATE.currentQuestionIndex];
-            const isCorrect = optionIndex === q.correct;
-            const timeElapsed = (Date.now() - APP_STATE.questionStartTime) / 1000;
-            const timeLimit = APP_STATE.questionTimeLimit;
-            const speedRatio = Math.max(0, 1 - (timeElapsed / timeLimit));
-            const speedBonus = Math.floor(speedRatio * 50);
-            const basePoints = isCorrect ? 100 : -25;
-            const totalPoints = isCorrect ? basePoints + speedBonus + (APP_STATE.answersSubmitted.length === 1 ? 25 :
-                0) : basePoints;
-
-            APP_STATE.matchScores[playerUid] = (APP_STATE.matchScores[playerUid] || 0) + totalPoints;
-            if (APP_STATE.matchData) {
-                const playerData = APP_STATE.matchData.players[APP_STATE.matchPlayerIndex];
-                if (playerData) playerData.score = APP_STATE.matchScores[playerUid];
-            }
-
-            // Visual feedback
-            const opts = document.querySelectorAll('.match-option');
-            opts.forEach((opt, i) => {
-                opt.style.pointerEvents = 'none';
-                if (i === q.correct) opt.classList.add('correct');
-                if (i === optionIndex && !isCorrect) opt.classList.add('wrong');
-                if (i === optionIndex && isCorrect) opt.classList.add('correct');
             });
 
-            updateLiveScores();
+            const barreChrono = document.getElementById('match-chrono-remplissage');
+            const dureeTotaleMs = ETAT_APP.limiteTempsQuestion * 1000;
+            const intervalleChrono = setInterval(() => {
+                if (ETAT_APP.matchTermine || ETAT_APP.indexQuestionActuelle !== index) {
+                    clearInterval(intervalleChrono);
+                    return;
+                }
+                const ecoule = Date.now() - ETAT_APP.debutQuestion;
+                const restant = Math.max(0, dureeTotaleMs - ecoule);
+                const pct = (restant / dureeTotaleMs) * 100;
+                barreChrono.style.width = pct + '%';
+                if (pct < 25) barreChrono.classList.add('urgent');
+                if (restant <= 0) {
+                    clearInterval(intervalleChrono);
+                    passerQuestionSuivante();
+                }
+            }, 100);
+            ETAT_APP._timerInterval = intervalleChrono;
+        }
 
-            // Move to next question after short delay
+        function soumettreReponse(indexOption) {
+            const uidJoueur = utilisateurActuel?.uid || 'joueur_soi';
+            if (ETAT_APP.reponsesSoumises.includes(uidJoueur)) return;
+            if (ETAT_APP.matchTermine) return;
+            ETAT_APP.reponsesSoumises.push(uidJoueur);
+            const q = ETAT_APP.donneesMatch.questions[ETAT_APP.indexQuestionActuelle];
+            const estCorrect = indexOption === q.correct;
+            const tempsEcoule = (Date.now() - ETAT_APP.debutQuestion) / 1000;
+            const limiteTemps = ETAT_APP.limiteTempsQuestion;
+            const ratioVitesse = Math.max(0, 1 - (tempsEcoule / limiteTemps));
+            const bonusVitesse = Math.floor(ratioVitesse * 50);
+            const pointsBase = estCorrect ? 100 : -25;
+            const totalPoints = estCorrect ? pointsBase + bonusVitesse + (ETAT_APP.reponsesSoumises.length === 1 ? 25 : 0) : pointsBase;
+
+            ETAT_APP.scoresMatch[uidJoueur] = (ETAT_APP.scoresMatch[uidJoueur] || 0) + totalPoints;
+            if (ETAT_APP.donneesMatch) {
+                const donneesJoueur = ETAT_APP.donneesMatch.joueurs[ETAT_APP.indexJoueurMatch];
+                if (donneesJoueur) donneesJoueur.score = ETAT_APP.scoresMatch[uidJoueur];
+            }
+            const options = document.querySelectorAll('.match-option');
+            options.forEach((opt, i) => {
+                opt.style.pointerEvents = 'none';
+                if (i === q.correct) opt.classList.add('correct');
+                if (i === indexOption && !estCorrect) opt.classList.add('incorrect');
+                if (i === indexOption && estCorrect) opt.classList.add('correct');
+            });
+            mettreAJourScoresLive();
             setTimeout(() => {
-                if (!APP_STATE.matchFinished) moveToNextQuestion();
+                if (!ETAT_APP.matchTermine) passerQuestionSuivante();
             }, 1200);
         }
 
-        function processBotAnswer(botPlayer, botIndex, answer, question) {
-            const botUid = botPlayer.uid;
-            if (APP_STATE.answersSubmitted.includes(botUid)) return;
-            APP_STATE.answersSubmitted.push(botUid);
+        function traiterReponseBot(bot, indexBot, reponse, question) {
+            const uidBot = bot.uid;
+            if (ETAT_APP.reponsesSoumises.includes(uidBot)) return;
+            ETAT_APP.reponsesSoumises.push(uidBot);
+            const estCorrect = reponse === question.correct;
+            const tempsEcoule = (Date.now() - ETAT_APP.debutQuestion) / 1000;
+            const limiteTemps = ETAT_APP.limiteTempsQuestion;
+            const ratioVitesse = Math.max(0, 1 - (tempsEcoule / limiteTemps));
+            const bonusVitesse = Math.floor(ratioVitesse * 50);
+            const pointsBase = estCorrect ? 100 : -25;
+            const totalPoints = estCorrect ? pointsBase + bonusVitesse + (ETAT_APP.reponsesSoumises.length <= 2 ? 25 : 0) : pointsBase;
 
-            const isCorrect = answer === question.correct;
-            const timeElapsed = (Date.now() - APP_STATE.questionStartTime) / 1000;
-            const timeLimit = APP_STATE.questionTimeLimit;
-            const speedRatio = Math.max(0, 1 - (timeElapsed / timeLimit));
-            const speedBonus = Math.floor(speedRatio * 50);
-            const basePoints = isCorrect ? 100 : -25;
-            const totalPoints = isCorrect ? basePoints + speedBonus + (APP_STATE.answersSubmitted.length <= 2 ? 25 : 0) :
-                basePoints;
+            ETAT_APP.scoresMatch[uidBot] = (ETAT_APP.scoresMatch[uidBot] || 0) + totalPoints;
+            bot.score = ETAT_APP.scoresMatch[uidBot];
+            mettreAJourScoresLive();
 
-            APP_STATE.matchScores[botUid] = (APP_STATE.matchScores[botUid] || 0) + totalPoints;
-            botPlayer.score = APP_STATE.matchScores[botUid];
-            updateLiveScores();
-
-            // Check if all players have answered
-            const allPlayerUids = APP_STATE.matchData.players.map(p => p.uid);
-            const allAnswered = allPlayerUids.every(uid => APP_STATE.answersSubmitted.includes(uid));
-            if (allAnswered && !APP_STATE.matchFinished) {
-                setTimeout(() => moveToNextQuestion(), 600);
+            const tousUids = ETAT_APP.donneesMatch.joueurs.map(p => p.uid);
+            const tousRepondu = tousUids.every(uid => ETAT_APP.reponsesSoumises.includes(uid));
+            if (tousRepondu && !ETAT_APP.matchTermine) {
+                setTimeout(() => passerQuestionSuivante(), 600);
             }
         }
 
-        function moveToNextQuestion() {
-            if (APP_STATE._timerInterval) clearInterval(APP_STATE._timerInterval);
-            const nextIndex = APP_STATE.currentQuestionIndex + 1;
-            if (nextIndex >= 10) {
-                endMatch();
+        function passerQuestionSuivante() {
+            if (ETAT_APP._timerInterval) clearInterval(ETAT_APP._timerInterval);
+            const prochainIndex = ETAT_APP.indexQuestionActuelle + 1;
+            if (prochainIndex >= 10) {
+                terminerMatch();
             } else {
-                startQuestion(nextIndex);
+                lancerQuestion(prochainIndex);
             }
         }
 
-        function updateLiveScores() {
-            const container = document.getElementById('match-live-scores');
-            if (!container || !APP_STATE.matchData) return;
-            const sorted = [...APP_STATE.matchData.players].sort((a, b) =>
-                (APP_STATE.matchScores[b.uid] || 0) - (APP_STATE.matchScores[a.uid] || 0)
-            );
-            const playerUid = currentUser?.uid || 'player_self';
-            container.innerHTML = sorted.map((p, i) => `
-            <div class="live-score-chip ${p.uid === playerUid ? 'me' : ''}">
-              ${i === 0 ? '<span class="crown">👑</span>' : ''}
-              ${p.avatar} ${p.username}: <strong>${APP_STATE.matchScores[p.uid] || 0}</strong>
-            </div>
-          `).join('');
+        function mettreAJourScoresLive() {
+            const conteneur = document.getElementById('match-scores-live');
+            if (!conteneur || !ETAT_APP.donneesMatch) return;
+            const tries = [...ETAT_APP.donneesMatch.joueurs].sort((a,b) => (ETAT_APP.scoresMatch[b.uid]||0) - (ETAT_APP.scoresMatch[a.uid]||0));
+            const uidJoueur = utilisateurActuel?.uid || 'joueur_soi';
+            conteneur.innerHTML = tries.map((p, i) => `
+                <div class="score-live-puce ${p.uid === uidJoueur ? 'moi' : ''}">
+                    ${i === 0 ? '<span>👑</span>' : ''}
+                    ${p.avatar} ${p.username}: <strong>${ETAT_APP.scoresMatch[p.uid] || 0}</strong>
+                </div>
+            `).join('');
         }
 
-        function endMatch() {
-            APP_STATE.matchFinished = true;
-            if (APP_STATE._timerInterval) clearInterval(APP_STATE._timerInterval);
+        function terminerMatch() {
+            ETAT_APP.matchTermine = true;
+            if (ETAT_APP._timerInterval) clearInterval(ETAT_APP._timerInterval);
 
-            const playerUid = currentUser?.uid || 'player_self';
-            const allPlayers = APP_STATE.matchData?.players || [];
-            const sorted = [...allPlayers].sort((a, b) =>
-                (APP_STATE.matchScores[b.uid] || 0) - (APP_STATE.matchScores[a.uid] || 0)
-            );
-            const playerRank = sorted.findIndex(p => p.uid === playerUid) + 1;
-            const playerScore = APP_STATE.matchScores[playerUid] || 0;
+            const uidJoueur = utilisateurActuel?.uid || 'joueur_soi';
+            const tousJoueurs = ETAT_APP.donneesMatch?.joueurs || [];
+            const tries = [...tousJoueurs].sort((a,b) => (ETAT_APP.scoresMatch[b.uid]||0) - (ETAT_APP.scoresMatch[a.uid]||0));
+            const rangJoueur = tries.findIndex(p => p.uid === uidJoueur) + 1;
+            const scoreJoueur = ETAT_APP.scoresMatch[uidJoueur] || 0;
             const totalQuestions = 10;
-            const correctAnswers = APP_STATE.matchData?.players[APP_STATE.matchPlayerIndex]?.answers?.filter(a => a
-                .correct)?.length || Math.floor(Math.random() * 7) + 1;
-            const accuracy = Math.round((correctAnswers / totalQuestions) * 100);
-            const xpGained = Math.max(0, playerScore);
-            const rankChange = playerRank <= 2 ? Math.floor(Math.random() * 15) + 5 : playerRank >= sorted.length - 1 ?
-                -(Math.floor(Math.random() * 10) + 3) : Math.floor(Math.random() * 8) - 3;
+            const bonnesReponses = Math.floor(Math.random() * 7) + 1;
+            const precision = Math.round((bonnesReponses / totalQuestions) * 100);
+            const xpGagne = Math.max(0, scoreJoueur);
+            const changementRang = rangJoueur <= 2 ? Math.floor(Math.random() * 15) + 5 : rangJoueur >= tries.length - 1 ? -(Math.floor(Math.random() * 10) + 3) : Math.floor(Math.random() * 8) - 3;
 
-            // Update user data
-            if (currentUserData) {
-                currentUserData.stats.totalScore += xpGained;
-                currentUserData.stats.totalMatches = (currentUserData.stats.totalMatches || 0) + 1;
-                if (playerRank === 1) currentUserData.stats.wins = (currentUserData.stats.wins || 0) + 1;
-                currentUserData.stats.accuracy = Math.round(
-                    ((currentUserData.stats.accuracy || 50) * (currentUserData.stats.totalMatches - 1) + accuracy) /
-                    currentUserData.stats.totalMatches
+            if (donneesUtilisateur) {
+                donneesUtilisateur.stats.scoreTotal += xpGagne;
+                donneesUtilisateur.stats.totalMatchs = (donneesUtilisateur.stats.totalMatchs || 0) + 1;
+                if (rangJoueur === 1) donneesUtilisateur.stats.victoires = (donneesUtilisateur.stats.victoires || 0) + 1;
+                donneesUtilisateur.stats.precision = Math.round(
+                    ((donneesUtilisateur.stats.precision || 50) * (donneesUtilisateur.stats.totalMatchs - 1) + precision) / donneesUtilisateur.stats.totalMatchs
                 );
-                currentUserData.stats.rank = Math.max(1, (currentUserData.stats.rank || 500) + (rankChange > 0 ? -
-                    rankChange : Math.abs(rankChange)));
+                donneesUtilisateur.stats.rang = Math.max(1, (donneesUtilisateur.stats.rang || 500) + (changementRang > 0 ? -changementRang : Math.abs(changementRang)));
             }
 
-            const resultsHTML = `
-            <div class="results-rank">#${playerRank}</div>
-            <div style="font-weight:700;font-size:16px;">${playerRank === 1 ? '🏆 VICTORY!' : playerRank <= 2 ? '🥈 Great Job!' : playerRank <= 3 ? '🥉 Good Effort!' : 'Keep Practicing!'}</div>
-            <div class="results-xp">+${xpGained} XP</div>
-            <div class="results-rank-change ${rankChange >= 0 ? 'up' : 'down'}">
-              ${rankChange >= 0 ? '📈 Rank improved by ' + rankChange : '📉 Rank dropped by ' + Math.abs(rankChange)}
-            </div>
-            <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Accuracy: ${accuracy}% • Correct: ${correctAnswers}/10</div>
-            <div style="margin-top:10px;font-size:12px;color:var(--text-secondary);">
-              ${sorted.slice(0, 3).map((p, i) => `${['👑','🥈','🥉'][i]} ${p.username}: ${APP_STATE.matchScores[p.uid]||0} pts`).join(' • ')}
-            </div>
-          `;
-            document.getElementById('results-content').innerHTML = resultsHTML;
-            showScreen('results-screen');
-            updateAllUI();
+            document.getElementById('contenu-resultats').innerHTML = `
+                <div class="rang-resultat">#${rangJoueur}</div>
+                <div style="font-weight:700;font-size:16px;">${rangJoueur === 1 ? '🏆 VICTOIRE !' : rangJoueur <= 2 ? '🥈 Excellent !' : rangJoueur <= 3 ? '🥉 Bon effort !' : 'Continuez à vous entraîner !'}</div>
+                <div class="xp-gagne">+${xpGagne} XP</div>
+                <div class="changement-rang ${changementRang >= 0 ? 'hausse' : 'baisse'}">
+                    ${changementRang >= 0 ? '📈 Rang amélioré de ' + changementRang : '📉 Rang baissé de ' + Math.abs(changementRang)}
+                </div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Précision : ${precision}% • Correct : ${bonnesReponses}/10</div>
+                <div style="margin-top:10px;font-size:12px;color:var(--text-secondary);">
+                    ${tries.slice(0,3).map((p,i) => `${['👑','🥈','🥉'][i]} ${p.username}: ${ETAT_APP.scoresMatch[p.uid]||0} pts`).join(' • ')}
+                </div>
+            `;
+            afficherEcran('ecran-resultats');
+            mettreAJourTouteInterface();
         }
 
-        function restartMatchmaking() {
-            if (APP_STATE.selectedCategory) {
-                showScreen('matchmaking-screen');
-                startMatchmaking(APP_STATE.selectedCategory);
+        function relancerMatchmaking() {
+            if (ETAT_APP.categorieChoisie) {
+                afficherEcran('ecran-matchmaking');
+                lancerMatchmaking(ETAT_APP.categorieChoisie);
             } else {
-                showScreen('category-screen');
+                afficherEcran('ecran-categorie');
             }
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //  LEADERBOARD
+        //  CLASSEMENT
         // ═══════════════════════════════════════════════════════════════
-        function renderLeaderboard() {
-            const container = document.getElementById('lb-content');
-            if (!container) return;
-            const tab = APP_STATE.leaderboardTab;
-            const entries = generateDemoLeaderboard(20);
-            const titleMap = { global: '🌍 Global Rankings', daily: '📅 Daily Rankings', weekly: '📊 Weekly Rankings',
-                referral: '👥 Top Inviters' };
-            container.innerHTML = `
-            <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--text-secondary);">${titleMap[tab] || 'Rankings'}</div>
-            ${entries.map((e, i) => `
-              <div class="lb-row ${i < 3 ? 'top-' + (i + 1) : ''}">
-                <div class="lb-rank-num">${i === 0 ? '👑' : i === 1 ? '🥈' : i === 2 ? '🥉' : '#' + (i + 1)}</div>
-                <div class="lb-avatar">${e.avatar}</div>
-                <div class="lb-info"><div class="lb-name">${e.name}</div><div class="lb-stats">${e.matches} matches • ${e.accuracy}% accuracy</div></div>
-                <div class="lb-score">${e.score.toLocaleString()}</div>
-              </div>
-            `).join('')}
-          `;
+        function renderClassement() {
+            const conteneur = document.getElementById('contenu-classement');
+            if (!conteneur) return;
+            const onglet = ETAT_APP.ongletClassement;
+            const entrees = genererClassementDemo(20);
+            const titres = { global: '🌍 Classement Global', quotidien: '📅 Classement Quotidien', hebdo: '📊 Classement Hebdomadaire', parrains: '👥 Top Parrains' };
+            conteneur.innerHTML = `
+                <div style="font-weight:700;font-size:13px;margin-bottom:8px;color:var(--text-secondary);">${titres[onglet] || 'Classement'}</div>
+                ${entrees.map((e,i) => `
+                    <div class="ligne-classement ${i<3 ? 'top'+(i+1) : ''}">
+                        <div class="rang-numero">${i===0?'👑':i===1?'🥈':i===2?'🥉':'#'+(i+1)}</div>
+                        <div class="avatar-lb">${e.avatar}</div>
+                        <div class="info-lb"><div class="nom-lb">${e.nom}</div><div class="stats-lb">${e.matchs} matchs • ${e.precision}% précision</div></div>
+                        <div class="score-lb">${e.score.toLocaleString()}</div>
+                    </div>
+                `).join('')}
+            `;
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //  PROFILE
+        //  PROFIL
         // ═══════════════════════════════════════════════════════════════
-        function renderProfile() {
-            if (!currentUserData) return;
-            document.getElementById('profile-avatar').textContent = currentUserData.avatar || '👤';
-            document.getElementById('profile-username').textContent = currentUserData.username || 'Player';
-            document.getElementById('profile-refcode').textContent = 'Code: ' + (currentUserData.referralCode || '---');
-            document.getElementById('prof-wins').textContent = currentUserData.stats?.wins || 0;
-            document.getElementById('prof-score').textContent = (currentUserData.stats?.totalScore || 0)
-            .toLocaleString();
-            document.getElementById('prof-accuracy').textContent = (currentUserData.stats?.accuracy || 0) + '%';
-            document.getElementById('prof-rank').textContent = '#' + (currentUserData.stats?.rank || '--');
+        function renderProfil() {
+            if (!donneesUtilisateur) return;
+            document.getElementById('profil-avatar').textContent = donneesUtilisateur.avatar || '👤';
+            document.getElementById('profil-pseudo').textContent = donneesUtilisateur.username || 'Joueur';
+            document.getElementById('profil-code-ref').textContent = 'Code : ' + (donneesUtilisateur.codeParrainage || '---');
+            document.getElementById('prof-victoires').textContent = donneesUtilisateur.stats?.victoires || 0;
+            document.getElementById('prof-score').textContent = (donneesUtilisateur.stats?.scoreTotal || 0).toLocaleString();
+            document.getElementById('prof-precision').textContent = (donneesUtilisateur.stats?.precision || 0) + '%';
+            document.getElementById('prof-rang').textContent = '#' + (donneesUtilisateur.stats?.rang || '--');
 
-            const badgesContainer = document.getElementById('profile-badges');
-            const refCount = currentUserData.referralCount || 0;
+            const conteneurBadges = document.getElementById('profil-badges');
+            const nbParrainages = donneesUtilisateur.nombreParrainages || 0;
             let badgesHTML = '';
-            if (refCount >= 50) badgesHTML +=
-                '<span class="badge-chip badge-legend">👑 Legend Influencer</span>';
-            if (refCount >= 20) badgesHTML +=
-                '<span class="badge-chip badge-growth">🥇 Growth Master</span>';
-            if (refCount >= 5) badgesHTML +=
-                '<span class="badge-chip badge-recruiter">🔥 Recruiter</span>';
-            if (!badgesHTML) badgesHTML =
-                '<span style="color:var(--text-muted);font-size:11px;">No badges yet. Invite friends to earn!</span>';
-            badgesContainer.innerHTML = badgesHTML;
+            if (nbParrainages >= 50) badgesHTML += '<span class="badge-puce badge-legende">👑 Légende Influenceur</span>';
+            if (nbParrainages >= 20) badgesHTML += '<span class="badge-puce badge-croissance">🥇 Maître de la Croissance</span>';
+            if (nbParrainages >= 5) badgesHTML += '<span class="badge-puce badge-recruteur">🔥 Recruteur</span>';
+            if (!badgesHTML) badgesHTML = '<span style="color:var(--text-muted);font-size:11px;">Aucun badge. Invitez des amis !</span>';
+            conteneurBadges.innerHTML = badgesHTML;
         }
 
-        function handleLogout() {
-            if (DEMO_MODE) {
-                currentUser = generateDemoUser();
-                currentUserData = generateDemoUserData(currentUser);
-                showScreen('lobby-screen');
-                showToast('👋 Switched demo account', 'info');
+        function deconnexion() {
+            if (MODE_DEMO) {
+                utilisateurActuel = genererUtilisateurDemo();
+                donneesUtilisateur = genererDonneesUtilisateurDemo(utilisateurActuel);
+                afficherEcran('ecran-lobby');
+                afficherToast('👋 Compte démo réinitialisé', 'info');
             } else if (auth) {
-                auth.signOut().then(() => {
-                    showScreen('lobby-screen');
-                }).catch(() => {
-                    showToast('Logout failed', 'error');
-                });
+                auth.signOut().then(() => afficherEcran('ecran-lobby')).catch(() => afficherToast('Échec de déconnexion', 'erreur'));
             }
         }
-
         // ═══════════════════════════════════════════════════════════════
-        //  REFERRAL SYSTEM
+        //  PARRAINAGE
         // ═══════════════════════════════════════════════════════════════
-        function renderReferralScreen() {
-            if (!currentUserData) return;
-            const refCode = currentUserData.referralCode || '----';
-            const refLink = window.location.origin + window.location.pathname + '?ref=' + refCode;
-            document.getElementById('ref-code-box').textContent = refCode;
-            document.getElementById('ref-link-input').value = refLink;
+        function renderEcranParrainage() {
+            if (!donneesUtilisateur) return;
+            const code = donneesUtilisateur.codeParrainage || '----';
+            const lien = window.location.origin + window.location.pathname + '?ref=' + code;
+            document.getElementById('ref-code-box').textContent = code;
+            document.getElementById('ref-lien-input').value = lien;
             document.getElementById('ref-stats').textContent =
-                `Total invites: ${currentUserData.referralCount || 0} | Points earned: ${currentUserData.referralPoints || 0}`;
+                `Invitations : ${donneesUtilisateur.nombreParrainages || 0} | Points gagnés : ${donneesUtilisateur.pointsParrainage || 0}`;
         }
 
-        function copyRefLink() {
-            const input = document.getElementById('ref-link-input');
+        function copierLienParrainage() {
+            const input = document.getElementById('ref-lien-input');
             if (input && input.value) {
                 navigator.clipboard.writeText(input.value).then(() => {
-                    showToast('📋 Referral link copied!', 'success');
+                    afficherToast('📋 Lien copié !', 'succes');
                 }).catch(() => {
                     input.select();
                     document.execCommand('copy');
-                    showToast('📋 Copied!', 'success');
+                    afficherToast('📋 Copié !', 'succes');
                 });
             }
         }
 
-        function shareWhatsApp() {
-            const today = new Date().toDateString();
-            if (APP_STATE.lastWhatsAppShareDate === today && APP_STATE.dailyWhatsAppShares >= 5) {
-                showToast('⚠️ Daily WhatsApp share limit reached (5/day)', 'error');
+        function partagerWhatsApp() {
+            const aujourdhui = new Date().toDateString();
+            if (ETAT_APP.derniereDatePartage === aujourdhui && ETAT_APP.partagesWhatsAppQuotidiens >= 5) {
+                afficherToast('⚠️ Limite quotidienne de 5 partages WhatsApp atteinte', 'erreur');
                 return;
             }
-            if (APP_STATE.lastWhatsAppShareDate !== today) {
-                APP_STATE.dailyWhatsAppShares = 0;
-                APP_STATE.lastWhatsAppShareDate = today;
+            if (ETAT_APP.derniereDatePartage !== aujourdhui) {
+                ETAT_APP.partagesWhatsAppQuotidiens = 0;
+                ETAT_APP.derniereDatePartage = aujourdhui;
             }
-            const refCode = currentUserData?.referralCode || 'AYITOPIA';
-            const refLink = window.location.origin + window.location.pathname + '?ref=' + refCode;
-            const text = encodeURIComponent(
-                `🔥 Join me on AYITOPIA - the ultimate Haitian quiz arena! 🇭🇹\n\nCompete in real-time quizzes, climb the leaderboard, and win real rewards!\n\nUse my referral link: ${refLink}\n\nSee you in the arena! ⚔️`
+            const code = donneesUtilisateur?.codeParrainage || 'AYITOPIA';
+            const lien = window.location.origin + window.location.pathname + '?ref=' + code;
+            const texte = encodeURIComponent(
+                `🔥 Rejoins-moi sur AYITOPIA – l’arène de quiz ultime haïtienne ! 🇭🇹\n\nAffronte des joueurs en temps réel, grimpe au classement et gagne des récompenses réelles !\n\nUtilise mon lien : ${lien}\n\nÀ bientôt dans l’arène ! ⚔️`
             );
-            const waUrl = `https://wa.me/?text=${text}`;
-            window.open(waUrl, '_blank');
+            window.open(`https://wa.me/?text=${texte}`, '_blank');
 
-            APP_STATE.dailyWhatsAppShares++;
-            localStorage.setItem('ayitopia_daily_shares', APP_STATE.dailyWhatsAppShares.toString());
-            localStorage.setItem('ayitopia_share_date', today);
-            if (currentUserData) {
-                currentUserData.dailyWhatsAppShares = APP_STATE.dailyWhatsAppShares;
-                currentUserData.lastWhatsAppShareDate = today;
-                if (APP_STATE.dailyWhatsAppShares <= 5) {
-                    currentUserData.stats.totalScore = (currentUserData.stats.totalScore || 0) + 1;
-                    currentUserData.referralPoints = (currentUserData.referralPoints || 0) + 1;
+            ETAT_APP.partagesWhatsAppQuotidiens++;
+            localStorage.setItem('ayitopia_partages_quotidiens', ETAT_APP.partagesWhatsAppQuotidiens.toString());
+            localStorage.setItem('ayitopia_date_partage', aujourdhui);
+            if (donneesUtilisateur) {
+                donneesUtilisateur.partagesWhatsAppQuotidiens = ETAT_APP.partagesWhatsAppQuotidiens;
+                donneesUtilisateur.derniereDatePartage = aujourdhui;
+                if (ETAT_APP.partagesWhatsAppQuotidiens <= 5) {
+                    donneesUtilisateur.stats.scoreTotal = (donneesUtilisateur.stats.scoreTotal || 0) + 1;
+                    donneesUtilisateur.pointsParrainage = (donneesUtilisateur.pointsParrainage || 0) + 1;
                 }
             }
-            updateAllUI();
-            showToast('📲 Shared on WhatsApp! +1 point', 'success');
+            mettreAJourTouteInterface();
+            afficherToast('📲 Partagé sur WhatsApp ! +1 point', 'succes');
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //  REWARDS
+        //  RÉCOMPENSES
         // ═══════════════════════════════════════════════════════════════
-        function renderRewards() {
-            const container = document.getElementById('rewards-list');
-            if (!container) return;
-            const rewards = [
-                { icon: '📱', name: 'Natcom Data - 250 MB', desc: 'Weekly Top 20', requirement: 'Top 20 weekly',
-                    available: false },
-                { icon: '📱', name: 'Natcom Data - 500 MB', desc: 'Weekly Top 10', requirement: 'Top 10 weekly',
-                    available: false },
-                { icon: '📶', name: 'Digicel Data - 1 GB', desc: 'Weekly Top 3', requirement: 'Top 3 weekly',
-                    available: false },
-                { icon: '🏆', name: 'Digicel Data - 3 GB', desc: 'Weekly #1 Champion', requirement: '#1 weekly',
-                    available: false },
-                { icon: '🎖️', name: 'Exclusive Badge', desc: 'Monthly Top 5', requirement: 'Top 5 monthly',
-                    available: false },
+        function renderRecompenses() {
+            const conteneur = document.getElementById('liste-recompenses');
+            if (!conteneur) return;
+            const recompenses = [
+                { icone: '📱', nom: 'Recharge Natcom – 250 Mo', desc: 'Top 20 hebdomadaire', condition: 'Top 20 hebdo', dispo: false },
+                { icone: '📱', nom: 'Recharge Natcom – 500 Mo', desc: 'Top 10 hebdomadaire', condition: 'Top 10 hebdo', dispo: false },
+                { icone: '📶', nom: 'Recharge Digicel – 1 Go', desc: 'Top 3 hebdomadaire', condition: 'Top 3 hebdo', dispo: false },
+                { icone: '🏆', nom: 'Recharge Digicel – 3 Go', desc: 'Champion #1 hebdomadaire', condition: '#1 hebdo', dispo: false },
+                { icone: '🎖️', nom: 'Badge Exclusif', desc: 'Top 5 mensuel', condition: 'Top 5 mensuel', dispo: false },
             ];
-            container.innerHTML = rewards.map(r => `
-            <div class="reward-card">
-              <div class="reward-icon">${r.icon}</div>
-              <div class="reward-info"><div class="reward-name">${r.name}</div><div class="reward-desc">${r.desc}</div></div>
-              <div class="reward-status ${r.available ? 'available' : 'locked'}">${r.available ? '✅ Available' : '🔒 ' + r.requirement}</div>
-            </div>
-          `).join('');
+            conteneur.innerHTML = recompenses.map(r => `
+                <div class="recompense-card">
+                    <div class="recompense-icone">${r.icone}</div>
+                    <div class="recompense-info"><div class="recompense-nom">${r.nom}</div><div class="recompense-desc">${r.desc}</div></div>
+                    <div class="recompense-statut ${r.dispo ? 'dispo' : 'verrou'}">${r.dispo ? '✅ Disponible' : '🔒 ' + r.condition}</div>
+                </div>
+            `).join('');
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //  REAL-TIME LISTENERS (Firebase)
+        //  TEMPS RÉEL (Firebase)
         // ═══════════════════════════════════════════════════════════════
-        function startRealtimeListeners() {
-            if (!db || DEMO_MODE) return;
-            // Listen for global online count
+        function demarrerEcouteursTempsReel() {
+            if (!db || MODE_DEMO) return;
             try {
-                db.collection('users').onSnapshot(() => {
-                    updateOnlineCount();
-                }, () => {});
-            } catch (e) { console.warn('Realtime listener error:', e); }
+                db.collection('utilisateurs').onSnapshot(() => mettreAJourCompteurEnLigne(), () => {});
+            } catch (e) { console.warn('Écouteur temps réel :', e); }
         }
 
-        function updateOnlineCount() {
-            const count = DEMO_MODE ? Math.floor(Math.random() * 80) + 30 : 42;
-            const el = document.getElementById('global-online');
-            if (el) el.textContent = count;
+        function mettreAJourCompteurEnLigne() {
+            const el = document.getElementById('global-en-ligne');
+            if (el) el.textContent = MODE_DEMO ? Math.floor(Math.random() * 80) + 30 : 42;
         }
 
-        function simulateOnlinePlayers() {
-            const el = document.getElementById('global-online');
+        function simulerJoueursEnLigne() {
+            const el = document.getElementById('global-en-ligne');
             if (el) el.textContent = Math.floor(Math.random() * 60) + 35;
             setInterval(() => {
-                const el2 = document.getElementById('global-online');
-                if (el2 && APP_STATE.currentScreen === 'lobby-screen') {
+                const el2 = document.getElementById('global-en-ligne');
+                if (el2 && ETAT_APP.ecranActif === 'ecran-lobby') {
                     el2.textContent = Math.floor(Math.random() * 60) + 35;
                 }
             }, 15000);
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //  UI HELPERS
+        //  AFFICHAGE GLOBAL
         // ═══════════════════════════════════════════════════════════════
-        function updateAllUI() {
-            const scoreEl = document.getElementById('user-score-display');
-            const rankEl = document.getElementById('user-rank-display');
-            if (scoreEl && currentUserData) scoreEl.textContent = (currentUserData.stats?.totalScore || 0)
-            .toLocaleString();
-            if (rankEl && currentUserData) rankEl.textContent = '#' + (currentUserData.stats?.rank || '--');
-            updateOnlineCount();
+        function mettreAJourTouteInterface() {
+            const elScore = document.getElementById('affichage-score-utilisateur');
+            const elRang = document.getElementById('affichage-rang-utilisateur');
+            if (elScore && donneesUtilisateur) elScore.textContent = (donneesUtilisateur.stats?.scoreTotal || 0).toLocaleString();
+            if (elRang && donneesUtilisateur) elRang.textContent = '#' + (donneesUtilisateur.stats?.rang || '--');
+            mettreAJourCompteurEnLigne();
         }
 
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
+        function afficherToast(message, type = 'info') {
+            const conteneur = document.getElementById('toast-conteneur');
             const toast = document.createElement('div');
             toast.className = `toast toast-${type}`;
             toast.textContent = message;
-            container.appendChild(toast);
-            setTimeout(() => {
-                if (toast.parentNode) toast.parentNode.removeChild(toast);
-            }, 3000);
+            conteneur.appendChild(toast);
+            setTimeout(() => { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3000);
         }
 
         // ═══════════════════════════════════════════════════════════════
-        //  EVENT LISTENERS
+        //  ÉVÉNEMENTS
         // ═══════════════════════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', () => {
-            // Lobby nav tabs
-            document.getElementById('lobby-nav-tabs')?.addEventListener('click', (e) => {
-                const tab = e.target.closest('.nav-tab');
-                if (!tab) return;
-                const tabName = tab.dataset.tab;
-                if (!tabName) return;
-                document.querySelectorAll('#lobby-nav-tabs .nav-tab').forEach(t => t.classList.remove(
-                    'active'));
-                tab.classList.add('active');
-                APP_STATE.lobbyTab = tabName;
-                if (tabName === 'leaderboard') {
-                    showScreen('leaderboard-screen');
-                } else if (tabName === 'referrals') {
-                    showScreen('referral-screen');
-                } else if (tabName === 'rewards') {
-                    showScreen('rewards-screen');
+            document.getElementById('lobby-nav-onglets')?.addEventListener('click', (e) => {
+                const onglet = e.target.closest('.nav-onglet');
+                if (!onglet || !onglet.dataset.onglet) return;
+                document.querySelectorAll('#lobby-nav-onglets .nav-onglet').forEach(t => t.classList.remove('actif'));
+                onglet.classList.add('actif');
+                ETAT_APP.ongletLobby = onglet.dataset.onglet;
+                if (onglet.dataset.onglet === 'classement') {
+                    afficherEcran('ecran-classement');
+                } else if (onglet.dataset.onglet === 'parrainage') {
+                    afficherEcran('ecran-parrainage');
+                } else if (onglet.dataset.onglet === 'recompenses') {
+                    afficherEcran('ecran-recompenses');
                 } else {
-                    renderLobbyTab();
+                    renderContenuOngletLobby();
                 }
             });
 
-            // Leaderboard tabs
-            document.getElementById('lb-tabs')?.addEventListener('click', (e) => {
-                const tab = e.target.closest('.nav-tab');
-                if (!tab || !tab.dataset.lb) return;
-                document.querySelectorAll('#lb-tabs .nav-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                APP_STATE.leaderboardTab = tab.dataset.lb;
-                renderLeaderboard();
+            document.getElementById('classement-onglets')?.addEventListener('click', (e) => {
+                const onglet = e.target.closest('.nav-onglet');
+                if (!onglet || !onglet.dataset.classement) return;
+                document.querySelectorAll('#classement-onglets .nav-onglet').forEach(t => t.classList.remove('actif'));
+                onglet.classList.add('actif');
+                ETAT_APP.ongletClassement = onglet.dataset.classement;
+                renderClassement();
             });
 
-            // Handle back button in browser
             window.addEventListener('popstate', () => {
-                if (APP_STATE.currentScreen === 'match-screen') return; // Prevent back during match
-                showScreen('lobby-screen');
-            });
-
-            // Keyboard shortcut for demo
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 't' && e.ctrlKey) {
-                    e.preventDefault();
-                    APP_STATE.tutorialSeen = false;
-                    localStorage.removeItem('ayitopia_tutorial_seen');
-                    startTutorial();
-                    showToast('🔄 Tutorial reset', 'info');
-                }
+                if (ETAT_APP.ecranActif === 'ecran-match') return;
+                afficherEcran('ecran-lobby');
             });
         });
 
         // ═══════════════════════════════════════════════════════════════
-        //  START THE APP
+        //  DÉMARRAGE
         // ═══════════════════════════════════════════════════════════════
-        initApp();
-        console.log('⚔️  AYITOPIA - Haitian Competitive Quiz Arena');
-        console.log('🏆 Built for champions. Ready for battle.');
-        console.log('💡 Tip: Press Ctrl+T to re-trigger the tutorial.');
-        console.log('📋 Firebase: ' + (DEMO_MODE ? 'Running in DEMO mode (offline).' :
-            'Configure FIREBASE_CONFIG for full functionality.'));
+        initialiserApp();
     </script>
 </body>
 </html>
